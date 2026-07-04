@@ -3,22 +3,15 @@ import multer from 'multer';
 import { PrismaClient } from '@prisma/client';
 import { authMiddleware, AuthRequest } from '../auth';
 import { sendNotificationEmail } from '../utils/mailer';
+import { imagekit } from '../utils/imagekit';
 import path from 'path';
-import fs from 'fs';
 
 const router = express.Router();
 const prisma = new PrismaClient();
 
-// Multer Config
-const storage = multer.diskStorage({
-  destination: './uploads/',
-  filename: (req, file, cb) => {
-    cb(null, `${Date.now()}-${file.originalname}`);
-  },
-});
-
+// Multer Config — use memory storage so we can stream to ImageKit
 const upload = multer({
-  storage,
+  storage: multer.memoryStorage(),
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
   fileFilter: (req, file, cb) => {
     const filetypes = /jpeg|jpg|png|pdf|doc|docx/;
@@ -33,10 +26,17 @@ const upload = multer({
   },
 });
 
-// Ensure uploads folder exists
-if (!fs.existsSync('./uploads')) {
-  fs.mkdirSync('./uploads');
-}
+// Helper: upload a file buffer to ImageKit and return the CDN URL
+const uploadToImageKit = async (buffer: Buffer, originalName: string): Promise<string> => {
+  const fileName = `${Date.now()}-${path.basename(originalName)}`;
+  const base64 = buffer.toString('base64');
+  const response = await imagekit.files.upload({
+    file: base64,
+    fileName,
+    folder: '/edutrack',
+  });
+  return (response as any).url;
+};
 
 // Student upload activity
 router.post('/upload', authMiddleware, upload.single('file'), async (req: AuthRequest, res) => {
@@ -58,6 +58,12 @@ router.post('/upload', authMiddleware, upload.single('file'), async (req: AuthRe
       return res.status(404).json({ error: 'Student profile not found' });
     }
 
+    // Upload file to ImageKit if provided
+    let fileUrl: string | null = null;
+    if (req.file) {
+      fileUrl = await uploadToImageKit(req.file.buffer, req.file.originalname);
+    }
+
     const activity = await prisma.activity.create({
       data: {
         studentId: userId,
@@ -65,7 +71,7 @@ router.post('/upload', authMiddleware, upload.single('file'), async (req: AuthRe
         description,
         type,
         status: 'SUBMITTED',
-        filePath: req.file ? req.file.filename : null,
+        filePath: fileUrl,
         credits: credits ? parseInt(credits) : 1,
       },
     });
@@ -297,12 +303,10 @@ router.put('/:id/resubmit', authMiddleware, upload.single('file'), async (req: A
       return res.status(403).json({ error: 'Forbidden: You can only resubmit your own activities' });
     }
 
-    // Cleanup old file if upload exists and new file is provided
-    if (req.file && activity.filePath) {
-      const oldPath = path.join('./uploads/', activity.filePath);
-      if (fs.existsSync(oldPath)) {
-        fs.unlinkSync(oldPath);
-      }
+    // Upload new file to ImageKit if provided
+    let newFileUrl: string | null = activity.filePath;
+    if (req.file) {
+      newFileUrl = await uploadToImageKit(req.file.buffer, req.file.originalname);
     }
 
     const updated = await prisma.activity.update({
@@ -312,7 +316,7 @@ router.put('/:id/resubmit', authMiddleware, upload.single('file'), async (req: A
         description: description || activity.description,
         type: type || activity.type,
         status: 'SUBMITTED',
-        filePath: req.file ? req.file.filename : activity.filePath,
+        filePath: newFileUrl,
         credits: credits ? parseInt(credits) : activity.credits,
         uploadDate: new Date(), // Reset upload date to now
       },
