@@ -1,0 +1,82 @@
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  email       String   @unique
+  password    String
+  name        String
+  role        String   // STUDENT, MENTOR, ADMIN
+  department  String?  // CSE, ECE, MECH, etc.
+  createdAt   DateTime @default(now())
+  isActive    Boolean  @default(true)
+  
+  studentActivities Activity[]         @relation("StudentActivities")
+  approvals         ActivityApproval[]
+  reports           Report[]
+  auditLogs         AuditLog[]
+  
+  // Mentor-Student assignment
+  mentorId          String?            @db.ObjectId
+  mentor            User?    @relation("MentorStudents", fields: [mentorId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  students          User[]   @relation("MentorStudents")
+}
+
+model Activity {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  studentId   String   @db.ObjectId
+  title       String
+  description String
+  type        String   // Workshop, Project, Volunteer, Internship, etc.
+  uploadDate  DateTime @default(now())
+  status      String   // SUBMITTED, UNDER_REVIEW, APPROVED, REJECTED
+  filePath    String?
+  credits     Int      @default(1)
+  
+  student     User     @relation("StudentActivities", fields: [studentId], references: [id], onDelete: Cascade)
+  approvals   ActivityApproval[]
+}
+
+model ActivityApproval {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  activityId  String   @db.ObjectId
+  mentorId    String   @db.ObjectId
+  decision    String   // APPROVED, REJECTED
+  feedback    String?
+  reviewDate  DateTime @default(now())
+  
+  activity    Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  mentor      User     @relation(fields: [mentorId], references: [id], onDelete: Cascade)
+}
+
+model Report {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  adminId     String   @db.ObjectId
+  period      String   // Weekly, Monthly, Semester
+  data        String   // JSON stringified report stats
+  generatedOn DateTime @default(now())
+  
+  admin       User     @relation(fields: [adminId], references: [id], onDelete: Cascade)
+}
+
+model AuditLog {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  action    String   
+  details   String
+  timestamp DateTime @default(now())
+  
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model SystemConfig {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  key         String   @unique
+  value       String   // JSON stringified configuration
+}
