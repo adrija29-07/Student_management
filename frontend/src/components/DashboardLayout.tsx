@@ -73,6 +73,8 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
     { name: 'Reports', path: '/student/reports', icon: <BarChart3 className="h-4 w-4" />, roles: ['STUDENT'] },
     { name: 'Notifications', path: '/student/notifications', icon: <Bell className="h-4 w-4" />, roles: ['STUDENT'] },
     { name: 'Settings', path: '/student/settings', icon: <Settings className="h-4 w-4" />, roles: ['STUDENT'] },
+    // FACULTY
+    { name: 'Dashboard', path: '/faculty/dashboard', icon: <LayoutDashboard className="h-4 w-4" />, roles: ['FACULTY'] },
     // MENTOR
     { name: 'Dashboard', path: '/mentor/dashboard', icon: <LayoutDashboard className="h-4 w-4" />, roles: ['MENTOR'] },
     { name: 'Review Queue', path: '/mentor/review-queue', icon: <ClipboardList className="h-4 w-4" />, roles: ['MENTOR'] },
@@ -95,6 +97,7 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
     '/student/reports': 'My Reports',
     '/student/notifications': 'Notifications',
     '/student/settings': 'Settings',
+    '/faculty/dashboard': 'Faculty Dashboard',
     '/mentor/dashboard': 'Mentor Dashboard',
     '/mentor/review-queue': 'Review Queue',
     '/mentor/my-students': 'My Students',
@@ -155,8 +158,10 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
             {user?.name.charAt(0).toUpperCase()}
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-xs font-semibold truncate text-slate-800 dark:text-slate-200">{user?.name}</p>
-            <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{user?.role}</p>
+            <p className="text-xs font-bold truncate text-slate-800 dark:text-slate-200 uppercase">{user?.name}</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 truncate uppercase font-semibold">
+              {user?.role}{user?.department ? ` - ${user.department}` : ''}
+            </p>
           </div>
         </div>
         <button
@@ -244,9 +249,16 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
               <div className="h-7 w-7 rounded-full bg-gradient-to-br from-brand-500 to-indigo-600 flex items-center justify-center text-white font-bold text-xs">
                 {user?.name.charAt(0).toUpperCase()}
               </div>
-              <span className="text-sm font-medium text-slate-700 dark:text-slate-300 hidden lg:block">
-                {user?.name}
-              </span>
+              <div className="hidden lg:flex flex-col">
+                <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                  {user?.name}
+                </span>
+                {user?.department && (
+                  <span className="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 -mt-0.5">
+                    {user.department}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
         </header>

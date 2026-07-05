@@ -38,7 +38,7 @@ export const MyActivities: React.FC = () => {
   const [typeFilter, setTypeFilter] = useState('All');
   const [sort, setSort] = useState<'newest' | 'oldest' | 'alpha'>('newest');
   const [page, setPage] = useState(1);
-  const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<number | string | null>(null);
 
   useEffect(() => { loadActivities(); }, []);
 
@@ -52,7 +52,7 @@ export const MyActivities: React.FC = () => {
     }
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: number | string) => {
     try {
       await activityAPI.deleteActivity(id);
       setActivities(p => p.filter(a => a.id !== id));

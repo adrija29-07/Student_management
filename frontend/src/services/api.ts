@@ -25,8 +25,8 @@ export const authAPI = {
   login: (email: string, password: string) =>
     api.post('/auth/login', { email, password }),
 
-  register: (email: string, password: string, name: string, role: string, department?: string) =>
-    api.post('/auth/register', { email, password, name, role, department }),
+  register: (email: string, password: string, name: string, role: string, department?: string, interestedFields?: string[]) =>
+    api.post('/auth/register', { email, password, name, role, department, interestedFields }),
 
   getCurrentUser: () =>
     api.get('/auth/me'),
@@ -37,40 +37,36 @@ export const authAPI = {
 
 export const activityAPI = {
   uploadActivity: (formData: FormData) =>
-    api.post('/activities/upload', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    }),
+    api.post('/activities/upload', formData),
 
   getMyActivities: (params?: { status?: string; type?: string }) =>
     api.get('/activities/my-activities', { params }),
 
-  getActivityById: (id: number) =>
+  getActivityById: (id: string | number) =>
     api.get(`/activities/${id}`),
 
-  getAllActivities: (params?: { status?: string; type?: string; studentId?: number; filterAssigned?: boolean }) =>
+  getAllActivities: (params?: { status?: string; type?: string; studentId?: string | number; filterAssigned?: boolean }) =>
     api.get('/activities/all', { params }),
 
-  reviewActivity: (id: number) =>
+  reviewActivity: (id: string | number) =>
     api.post(`/activities/${id}/review`),
 
-  approveActivity: (id: number, feedback?: string) =>
+  approveActivity: (id: string | number, feedback?: string) =>
     api.post(`/activities/${id}/approve`, { feedback }),
 
-  rejectActivity: (id: number, feedback: string) =>
+  rejectActivity: (id: string | number, feedback: string) =>
     api.post(`/activities/${id}/reject`, { feedback }),
 
-  requestRevision: (id: number, feedback: string) =>
+  requestRevision: (id: string | number, feedback: string) =>
     api.post(`/activities/${id}/reject`, { feedback }),
 
-  resubmitActivity: (id: number, formData: FormData) =>
-    api.put(`/activities/${id}/resubmit`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    }),
+  resubmitActivity: (id: string | number, formData: FormData) =>
+    api.put(`/activities/${id}/resubmit`, formData),
 
-  deleteActivity: (id: number) =>
+  deleteActivity: (id: string | number) =>
     api.delete(`/activities/${id}`),
 
-  bulkApprove: (activityIds: number[], feedback?: string) =>
+  bulkApprove: (activityIds: (string | number)[], feedback?: string) =>
     api.post('/activities/bulk-approve', { activityIds, feedback }),
 };
 
@@ -84,13 +80,13 @@ export const adminAPI = {
   bulkImportUsers: (users: any[]) =>
     api.post('/admin/users/bulk', { users }),
 
-  assignMentor: (studentId: number, mentorId: number | null) =>
+  assignMentor: (studentId: string | number, mentorId: string | number | null) =>
     api.put(`/admin/users/${studentId}/assign-mentor`, { mentorId }),
 
-  updateUser: (id: number, userData: any) =>
+  updateUser: (id: string | number, userData: any) =>
     api.put(`/admin/users/${id}`, userData),
 
-  deactivateUser: (id: number) =>
+  deactivateUser: (id: string | number) =>
     api.put(`/admin/users/${id}`, { isActive: false }),
 
   getDashboardStats: () =>

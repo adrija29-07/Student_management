@@ -5,6 +5,7 @@ import { Login } from './pages/Login';
 import { Register } from './pages/Register';
 import { StudentDashboard } from './pages/StudentDashboard';
 import { AdminDashboard } from './pages/AdminDashboard';
+import { FacultyDashboard } from './pages/FacultyDashboard';
 import { DashboardLayout } from './components/DashboardLayout';
 
 import { MentorHome } from './pages/mentor/MentorHome';
@@ -51,8 +52,9 @@ const RoleProtectedRoute: React.FC<{ children: React.ReactNode; roles: string[] 
 
   if (!user || !roles.includes(user.role)) {
     // Dynamic fallback based on what role they are
-    if (user?.role === 'ADMIN') return <Navigate to="/admin" replace />;
-    if (user?.role === 'MENTOR') return <Navigate to="/mentor" replace />;
+    if (user?.role === 'ADMIN') return <Navigate to="/admin/dashboard" replace />;
+    if (user?.role === 'MENTOR') return <Navigate to="/mentor/dashboard" replace />;
+    if (user?.role === 'FACULTY') return <Navigate to="/faculty/dashboard" replace />;
     return <Navigate to="/student/dashboard" replace />;
   }
 
@@ -73,8 +75,9 @@ const RootRedirect: React.FC = () => {
 
   if (!token) return <Navigate to="/login" replace />;
 
-  if (user?.role === 'ADMIN') return <Navigate to="/admin" replace />;
-  if (user?.role === 'MENTOR') return <Navigate to="/mentor" replace />;
+  if (user?.role === 'ADMIN') return <Navigate to="/admin/dashboard" replace />;
+  if (user?.role === 'MENTOR') return <Navigate to="/mentor/dashboard" replace />;
+  if (user?.role === 'FACULTY') return <Navigate to="/faculty/dashboard" replace />;
   return <Navigate to="/student/dashboard" replace />;
 };
 
@@ -121,7 +124,8 @@ export default function App() {
                 <RoleProtectedRoute roles={['MENTOR']}>
                   <DashboardLayout>
                     <Routes>
-                      <Route index element={<MentorHome />} />
+                      <Route index element={<Navigate to="dashboard" replace />} />
+                      <Route path="dashboard" element={<MentorHome />} />
                       <Route path="review-queue" element={<ReviewQueue />} />
                       <Route path="review/:id" element={<ReviewActivity />} />
                       <Route path="my-students" element={<MyStudents />} />
@@ -133,9 +137,30 @@ export default function App() {
               </ProtectedRoute>
             } 
           />
+
+          <Route 
+            path="/faculty/*" 
+            element={
+              <ProtectedRoute>
+                <RoleProtectedRoute roles={['FACULTY']}>
+                  <DashboardLayout>
+                    <Routes>
+                      <Route index element={<Navigate to="dashboard" replace />} />
+                      <Route path="dashboard" element={<FacultyDashboard />} />
+                    </Routes>
+                  </DashboardLayout>
+                </RoleProtectedRoute>
+              </ProtectedRoute>
+            } 
+          />
           
           <Route 
             path="/admin" 
+            element={<Navigate to="/admin/dashboard" replace />} 
+          />
+
+          <Route 
+            path="/admin/dashboard" 
             element={
               <ProtectedRoute>
                 <RoleProtectedRoute roles={['ADMIN']}>

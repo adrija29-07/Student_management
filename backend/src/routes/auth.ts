@@ -8,9 +8,9 @@ const prisma = new PrismaClient();
 // Register new user
 router.post('/register', async (req, res) => {
   try {
-    const { email, password, name, role, department } = req.body;
-    
-    if (!email || !password || !name || !role) {
+    const { email, password, name, department, interestedFields } = req.body;
+
+    if (!email || !password || !name) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
@@ -19,18 +19,20 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ error: 'Email already registered' });
     }
 
+    const role = 'STUDENT';
     const user = await prisma.user.create({
       data: {
         email,
         password: hashPassword(password),
         name,
-        role: role.toUpperCase(), // STUDENT, MENTOR, ADMIN
+        role,
         department: department || null,
+        interestedFields: interestedFields || [],
         isActive: true,
       },
     });
 
-    // Automatically link student to a default mentor if available (optional/fallback)
+    let mentorId: string | null = null;
     if (user.role === 'STUDENT') {
       const defaultMentor = await prisma.user.findFirst({
         where: { role: 'MENTOR', department: user.department || undefined, isActive: true },
@@ -40,10 +42,11 @@ router.post('/register', async (req, res) => {
           where: { id: user.id },
           data: { mentorId: defaultMentor.id },
         });
+        mentorId = defaultMentor.id;
       }
     }
 
-    const token = generateToken(user.id, user.role);
+    const token = generateToken(user.id, user.role, user.department, mentorId);
     res.status(201).json({
       token,
       user: {
@@ -52,7 +55,8 @@ router.post('/register', async (req, res) => {
         name: user.name,
         role: user.role,
         department: user.department,
-        mentorId: user.mentorId
+        mentorId,
+        interestedFields: user.interestedFields,
       },
     });
   } catch (error) {
@@ -83,7 +87,7 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid credentials or inactive account' });
     }
 
-    const token = generateToken(user.id, user.role);
+    const token = generateToken(user.id, user.role, user.department, user.mentorId);
     res.json({
       token,
       user: {
@@ -92,7 +96,9 @@ router.post('/login', async (req, res) => {
         name: user.name,
         role: user.role,
         department: user.department,
-        mentor: user.mentor
+        mentorId: user.mentorId,
+        mentor: user.mentor,
+        interestedFields: user.interestedFields,
       },
     });
   } catch (error) {
@@ -123,7 +129,9 @@ router.get('/me', authMiddleware, async (req: AuthRequest, res) => {
       name: user.name,
       role: user.role,
       department: user.department,
-      mentor: user.mentor
+      mentorId: user.mentorId,
+      mentor: user.mentor,
+      interestedFields: user.interestedFields,
     });
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch user context' });

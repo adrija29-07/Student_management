@@ -10,8 +10,10 @@ export const Register: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [department, setDepartment] = useState('CSE');
+  const [interestedFields, setInterestedFields] = useState<string[]>([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -19,9 +21,8 @@ export const Register: React.FC = () => {
     setLoading(true);
 
     try {
-      // By default, open registration is for students. Mentors and Admins are created by Admin dashboard.
-      await register(email, password, name, 'STUDENT', department);
-      navigate('/dashboard');
+      await register(email, password, name, 'STUDENT', department, interestedFields);
+      navigate('/student/dashboard');
     } catch (err: any) {
       setError(err.message || 'Registration failed.');
     } finally {
@@ -121,6 +122,7 @@ export const Register: React.FC = () => {
                 </select>
               </div>
             </div>
+
 
             <div>
               <label htmlFor="password" className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">

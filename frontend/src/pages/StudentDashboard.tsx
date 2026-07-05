@@ -36,6 +36,8 @@ interface Activity {
       email: string;
     };
   }>;
+  githubLink?: string | null;
+  linkedinLink?: string | null;
 }
 
 export const StudentDashboard: React.FC = () => {
@@ -51,6 +53,8 @@ export const StudentDashboard: React.FC = () => {
   const [type, setType] = useState('Workshop');
   const [credits, setCredits] = useState('1');
   const [file, setFile] = useState<File | null>(null);
+  const [githubLink, setGithubLink] = useState('');
+  const [linkedinLink, setLinkedinLink] = useState('');
   
   // Resubmission states
   const [resubmittingActivity, setResubmittingActivity] = useState<Activity | null>(null);
@@ -60,7 +64,7 @@ export const StudentDashboard: React.FC = () => {
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  const targetCredits = 10;
+  const targetCredits = 100;
 
   useEffect(() => {
     loadActivities();
@@ -98,6 +102,8 @@ export const StudentDashboard: React.FC = () => {
     formData.append('description', description);
     formData.append('type', type);
     formData.append('credits', credits);
+    if (githubLink) formData.append('githubLink', githubLink);
+    if (linkedinLink) formData.append('linkedinLink', linkedinLink);
     if (file) {
       formData.append('file', file);
     }
@@ -122,6 +128,8 @@ export const StudentDashboard: React.FC = () => {
     formData.append('description', description);
     formData.append('type', type);
     formData.append('credits', credits);
+    if (githubLink) formData.append('githubLink', githubLink);
+    if (linkedinLink) formData.append('linkedinLink', linkedinLink);
     if (file) {
       formData.append('file', file);
     }
@@ -142,6 +150,8 @@ export const StudentDashboard: React.FC = () => {
     setDescription(act.description);
     setType(act.type);
     setCredits(act.credits.toString());
+    setGithubLink(act.githubLink || '');
+    setLinkedinLink(act.linkedinLink || '');
     setFile(null);
   };
 
@@ -150,6 +160,8 @@ export const StudentDashboard: React.FC = () => {
     setDescription('');
     setType('Workshop');
     setCredits('1');
+    setGithubLink('');
+    setLinkedinLink('');
     setFile(null);
   };
 
@@ -179,89 +191,99 @@ export const StudentDashboard: React.FC = () => {
     canvas.width = 800;
     canvas.height = 600;
 
-    // Background Gradient
-    const grad = ctx.createLinearGradient(0, 0, 800, 600);
-    grad.addColorStop(0, '#0f172a'); // slate-900
-    grad.addColorStop(1, '#1e1b4b'); // indigo-950
-    ctx.fillStyle = grad;
+    // Classic ivory background
+    ctx.fillStyle = '#fdfbf7';
     ctx.fillRect(0, 0, 800, 600);
 
-    // Border
-    ctx.strokeStyle = '#4f46e5'; // indigo-600
-    ctx.lineWidth = 15;
+    // Elegant Outer Border (Navy)
+    ctx.strokeStyle = '#1e3a8a'; // blue-900
+    ctx.lineWidth = 12;
     ctx.strokeRect(20, 20, 760, 560);
 
-    // Inner gold border
-    ctx.strokeStyle = '#d97706'; // amber-600
-    ctx.lineWidth = 3;
-    ctx.strokeRect(35, 35, 730, 530);
+    // Elegant Inner Border (Gold)
+    ctx.strokeStyle = '#b45309'; // amber-700
+    ctx.lineWidth = 4;
+    ctx.strokeRect(36, 36, 728, 528);
+
+    // Corner decorative squares
+    ctx.fillStyle = '#1e3a8a';
+    ctx.fillRect(20, 20, 20, 20);
+    ctx.fillRect(760, 20, 20, 20);
+    ctx.fillRect(20, 560, 20, 20);
+    ctx.fillRect(760, 560, 20, 20);
 
     // Typography setup
-    ctx.fillStyle = '#ffffff';
     ctx.textAlign = 'center';
 
     // Header Title
-    ctx.font = 'bold 36px Outfit';
-    ctx.fillStyle = '#f8fafc';
-    ctx.fillText('EDUTRACK ACADEMY', 400, 110);
+    ctx.font = 'bold 40px "Times New Roman", serif';
+    ctx.fillStyle = '#1e3a8a'; // Navy
+    ctx.fillText('EDUTRACK ACADEMY', 400, 120);
 
-    ctx.font = '20px Inter';
-    ctx.fillStyle = '#a5b4fc';
-    ctx.fillText('CURRICULUM COMPLETION CERTIFICATE', 400, 150);
+    ctx.font = '600 18px "Times New Roman", serif';
+    ctx.fillStyle = '#b45309'; // Gold/Brown
+    ctx.fillText('CURRICULUM COMPLETION CERTIFICATE', 400, 160);
 
     // Decorative line
-    ctx.strokeStyle = '#d97706';
-    ctx.lineWidth = 2;
+    ctx.strokeStyle = '#b45309';
+    ctx.lineWidth = 1.5;
     ctx.beginPath();
-    ctx.moveTo(300, 175);
-    ctx.lineTo(500, 175);
+    ctx.moveTo(250, 185);
+    ctx.lineTo(550, 185);
     ctx.stroke();
 
     // Body
-    ctx.font = 'italic 18px Inter';
-    ctx.fillStyle = '#cbd5e1';
-    ctx.fillText('This is proudly presented to', 400, 230);
+    ctx.font = 'italic 20px "Times New Roman", serif';
+    ctx.fillStyle = '#334155'; // slate-700
+    ctx.fillText('This is proudly presented to', 400, 240);
 
     // Student Name
-    ctx.font = 'bold 38px Outfit';
-    ctx.fillStyle = '#fbbf24'; // amber-400
-    ctx.fillText(user.name, 400, 290);
+    ctx.font = 'bold 44px "Times New Roman", serif';
+    ctx.fillStyle = '#0f172a'; // slate-900
+    ctx.fillText(user.name, 400, 300);
 
-    ctx.font = '16px Inter';
-    ctx.fillStyle = '#cbd5e1';
-    ctx.fillText(`for successfully fulfilling the undergraduate tracking requirements`, 400, 340);
-    ctx.fillText(`in the department of ${user.department || 'General Study'} with a total of`, 400, 365);
+    ctx.font = '18px "Times New Roman", serif';
+    ctx.fillStyle = '#334155';
+    ctx.fillText(`for successfully fulfilling the undergraduate tracking requirements`, 400, 350);
+    ctx.fillText(`in the department of ${user.department || 'General Study'} with a total of`, 400, 380);
 
-    ctx.font = 'bold 20px Outfit';
-    ctx.fillStyle = '#fbbf24';
-    ctx.fillText(`${approvedCredits} Activity Credits Approved`, 400, 410);
+    // Credits Highlight
+    ctx.font = 'bold 24px "Times New Roman", serif';
+    ctx.fillStyle = '#1e3a8a';
+    ctx.fillText(`${approvedCredits} Activity Credits Approved`, 400, 430);
 
     // Footer signatures
-    ctx.font = '14px Inter';
-    ctx.fillStyle = '#94a3b8';
+    ctx.font = 'italic 16px "Times New Roman", serif';
+    ctx.fillStyle = '#0f172a';
     
     // Mentor line
-    ctx.fillText('Prof. Sharma', 200, 490);
-    ctx.strokeStyle = '#475569';
+    ctx.fillText('Prof. Sharma', 200, 500);
+    ctx.strokeStyle = '#64748b'; // slate-500
     ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.moveTo(120, 470);
-    ctx.lineTo(280, 470);
+    ctx.moveTo(120, 480);
+    ctx.lineTo(280, 480);
     ctx.stroke();
-    ctx.fillText('Academic Mentor', 200, 510);
+    ctx.font = '14px sans-serif';
+    ctx.fillStyle = '#64748b';
+    ctx.fillText('Academic Mentor', 200, 520);
 
     // Institute line
-    ctx.fillText('Dr. Gupta', 600, 490);
+    ctx.font = 'italic 16px "Times New Roman", serif';
+    ctx.fillStyle = '#0f172a';
+    ctx.fillText('Dr. Gupta', 600, 500);
     ctx.beginPath();
-    ctx.moveTo(520, 470);
-    ctx.lineTo(680, 470);
+    ctx.moveTo(520, 480);
+    ctx.lineTo(680, 480);
     ctx.stroke();
-    ctx.fillText('System Coordinator', 600, 510);
+    ctx.font = '14px sans-serif';
+    ctx.fillStyle = '#64748b';
+    ctx.fillText('System Coordinator', 600, 520);
 
     // Verified Seal
-    ctx.fillStyle = '#fbbf24';
-    ctx.font = 'bold 12px Inter';
-    ctx.fillText('★ VERIFIED SECURE ★', 400, 550);
+    ctx.fillStyle = '#b45309';
+    ctx.font = 'bold 12px sans-serif';
+    ctx.fillText('★ OFFICIAL RECORD ★', 400, 550);
 
     // Trigger download
     const image = canvas.toDataURL('image/png');
@@ -271,8 +293,30 @@ export const StudentDashboard: React.FC = () => {
     link.click();
   };
 
+  const missingFields = (user?.interestedFields || []).filter(
+    (field) => !activities.some((act) => 
+      act.status === 'APPROVED' && 
+      (act.title.toLowerCase().includes(field.toLowerCase()) || 
+       act.description.toLowerCase().includes(field.toLowerCase()) ||
+       act.type.toLowerCase().includes(field.toLowerCase()))
+    )
+  );
+
   return (
     <div className="space-y-8 max-w-7xl mx-auto">
+      {/* Missing Interested Fields Warning */}
+      {missingFields.length > 0 && (
+        <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/50 rounded-2xl p-4 flex items-start gap-3">
+          <AlertTriangle className="h-5 w-5 text-amber-500 mt-0.5" />
+          <div>
+            <h4 className="text-sm font-bold text-amber-800 dark:text-amber-400">Action Recommended</h4>
+            <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
+              You haven't submitted any approved activities covering your interested fields: <strong>{missingFields.join(', ')}</strong>. Try to upload activities in these areas!
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Welcome Card & Target Bar */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 bg-gradient-to-br from-brand-600 to-indigo-800 text-white rounded-3xl p-6 sm:p-8 flex flex-col justify-between shadow-xl relative overflow-hidden">
@@ -533,11 +577,13 @@ export const StudentDashboard: React.FC = () => {
                   <div className="flex items-center gap-2">
                     <FileText className="h-5 w-5 text-brand-500" />
                     <span className="text-xs text-slate-600 dark:text-slate-400 truncate max-w-xs">
-                      {selectedActivity.filePath.replace(/^\d+-/, '')}
+                      {selectedActivity.filePath.startsWith('http')
+                        ? decodeURIComponent(selectedActivity.filePath.split('/').pop()?.replace(/^\d+-/, '') || 'Uploaded File')
+                        : selectedActivity.filePath.replace(/^\d+-/, '')}
                     </span>
                   </div>
                   <a
-                    href={`http://localhost:5000/uploads/${selectedActivity.filePath}`}
+                    href={selectedActivity.filePath.startsWith('http') ? selectedActivity.filePath : `http://localhost:5000/uploads/${selectedActivity.filePath}`}
                     target="_blank"
                     rel="noreferrer"
                     className="p-1 text-brand-600 dark:text-brand-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg"
@@ -655,6 +701,33 @@ export const StudentDashboard: React.FC = () => {
                 />
               </div>
 
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
+                    GitHub Link (Optional)
+                  </label>
+                  <input
+                    type="url"
+                    value={githubLink}
+                    onChange={(e) => setGithubLink(e.target.value)}
+                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                    placeholder="https://github.com/..."
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
+                    LinkedIn Link (Optional)
+                  </label>
+                  <input
+                    type="url"
+                    value={linkedinLink}
+                    onChange={(e) => setLinkedinLink(e.target.value)}
+                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                    placeholder="https://linkedin.com/..."
+                  />
+                </div>
+              </div>
+
               <div>
                 <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
                   Supporting Document (PDF, Image)
@@ -759,6 +832,31 @@ export const StudentDashboard: React.FC = () => {
                   onChange={(e) => setDescription(e.target.value)}
                   className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                 />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
+                    GitHub Link (Optional)
+                  </label>
+                  <input
+                    type="url"
+                    value={githubLink}
+                    onChange={(e) => setGithubLink(e.target.value)}
+                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
+                    LinkedIn Link (Optional)
+                  </label>
+                  <input
+                    type="url"
+                    value={linkedinLink}
+                    onChange={(e) => setLinkedinLink(e.target.value)}
+                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                  />
+                </div>
               </div>
 
               <div>

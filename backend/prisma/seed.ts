@@ -11,7 +11,12 @@ async function main() {
   // 1. Create Admins
   const admin = await prisma.user.upsert({
     where: { email: 'admin@tracker.com' },
-    update: {},
+    update: {
+      role: 'ADMIN',
+      name: 'Dr. Gupta (Coordinator)',
+      password: passwordHash,
+      department: 'CSE',
+    },
     create: {
       email: 'admin@tracker.com',
       password: passwordHash,
@@ -25,7 +30,12 @@ async function main() {
   // 2. Create Mentors
   const mentor1 = await prisma.user.upsert({
     where: { email: 'sharma@tracker.com' },
-    update: {},
+    update: {
+      role: 'MENTOR',
+      name: 'Prof. Sharma',
+      password: passwordHash,
+      department: 'CSE',
+    },
     create: {
       email: 'sharma@tracker.com',
       password: passwordHash,
@@ -37,7 +47,12 @@ async function main() {
 
   const mentor2 = await prisma.user.upsert({
     where: { email: 'verma@tracker.com' },
-    update: {},
+    update: {
+      role: 'MENTOR',
+      name: 'Dr. Verma',
+      password: passwordHash,
+      department: 'ECE',
+    },
     create: {
       email: 'verma@tracker.com',
       password: passwordHash,
@@ -51,7 +66,13 @@ async function main() {
   // 3. Create Students and Link to Mentors
   const student1 = await prisma.user.upsert({
     where: { email: 'arjun@tracker.com' },
-    update: {},
+    update: {
+      role: 'STUDENT',
+      name: 'Arjun Mehta',
+      password: passwordHash,
+      department: 'CSE',
+      mentorId: mentor1.id,
+    },
     create: {
       email: 'arjun@tracker.com',
       password: passwordHash,
@@ -64,7 +85,13 @@ async function main() {
 
   const student2 = await prisma.user.upsert({
     where: { email: 'priya@tracker.com' },
-    update: {},
+    update: {
+      role: 'STUDENT',
+      name: 'Priya Patel',
+      password: passwordHash,
+      department: 'CSE',
+      mentorId: mentor1.id,
+    },
     create: {
       email: 'priya@tracker.com',
       password: passwordHash,
@@ -77,7 +104,13 @@ async function main() {
 
   const student3 = await prisma.user.upsert({
     where: { email: 'rohit@tracker.com' },
-    update: {},
+    update: {
+      role: 'STUDENT',
+      name: 'Rohit Sen',
+      password: passwordHash,
+      department: 'ECE',
+      mentorId: mentor2.id,
+    },
     create: {
       email: 'rohit@tracker.com',
       password: passwordHash,

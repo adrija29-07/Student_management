@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 
 interface Activity {
-  id: number;
+  id: string;
   title: string;
   type: string;
   status: string;
@@ -36,7 +36,7 @@ export const ProgressTracking: React.FC = () => {
   const [editDept, setEditDept] = useState(user?.department || '');
   const [saving, setSaving] = useState(false);
 
-  const TARGET_CREDITS = 10;
+  const TARGET_CREDITS = 100;
 
   useEffect(() => {
     activityAPI.getMyActivities().then(({ data }) => {

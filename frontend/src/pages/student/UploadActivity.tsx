@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 
 const ACTIVITY_TYPES = ['Workshop', 'Internship', 'Project', 'Volunteer Work', 'Sports', 'Certifications', 'Other'];
-const DEPARTMENTS = ['Engineering', 'Management', 'Science', 'Arts & Humanities', 'Commerce', 'Law', 'Medical', 'Other'];
+const DEPARTMENTS = ['INFORMATION TECHNOLOGY', 'ARTIFICIAL INTELLIGENCE AND DATA SCIENCE', 'COMPUTER SCIENCE AND ENGINEERING', 'ELECTRONICS AND COMMUNICATION ENGINEERING', 'ELECTICAL ENGINEERING'];
 
 export const UploadActivity: React.FC = () => {
   const navigate = useNavigate();
@@ -16,13 +16,26 @@ export const UploadActivity: React.FC = () => {
 
   const [title, setTitle] = useState(resubmit?.title || '');
   const [type, setType] = useState(resubmit?.type || 'Workshop');
-  const [department, setDepartment] = useState(resubmit?.department || 'Engineering');
+
+  const DEPARTMENTS = [
+    "INFORMATION TECHNOLOGY",
+    "ARTIFICIAL INTELLIGENCE AND DATA SCIENCE",
+    "COMPUTER SCIENCE AND ENGINEERING",
+    "ELECTRONICS AND COMMUNICATION ENGINEERING",
+    "ELECTRICAL ENGINEERING"
+  ];
+
+  const [department, setDepartment] = useState(
+    resubmit?.department || DEPARTMENTS[0]
+  );
   const [description, setDescription] = useState(resubmit?.description || '');
   const [credits, setCredits] = useState(resubmit?.credits?.toString() || '1');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
+  const [githubLink, setGithubLink] = useState(resubmit?.githubLink || '');
+  const [linkedinLink, setLinkedinLink] = useState(resubmit?.linkedinLink || '');
   const [file, setFile] = useState<File | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -56,6 +69,8 @@ export const UploadActivity: React.FC = () => {
     formData.append('description', description);
     formData.append('type', type);
     formData.append('credits', credits);
+    formData.append('githubLink', githubLink);
+    formData.append('linkedinLink', linkedinLink);
     if (file) formData.append('file', file);
     try {
       if (resubmit) {
@@ -199,15 +214,47 @@ export const UploadActivity: React.FC = () => {
                   key={c}
                   type="button"
                   onClick={() => setCredits(c.toString())}
-                  className={`flex-1 py-2.5 rounded-xl text-sm font-semibold border transition-all ${
-                    credits === c.toString()
-                      ? 'bg-brand-600 text-white border-brand-600 shadow-md shadow-brand-500/20'
-                      : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-brand-300'
-                  }`}
+                  className={`flex-1 py-2.5 rounded-xl text-sm font-semibold border transition-all ${credits === c.toString()
+                    ? 'bg-brand-600 text-white border-brand-600 shadow-md shadow-brand-500/20'
+                    : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-brand-300'
+                    }`}
                 >
                   {c}
                 </button>
               ))}
+            </div>
+          </div>
+        </div>
+
+        {/* External References Links */}
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 space-y-4 shadow-sm">
+          <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-350 border-b border-slate-100 dark:border-slate-800 pb-3">
+            External Project References (Optional)
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
+                GitHub Repository Link
+              </label>
+              <input
+                type="url"
+                value={githubLink}
+                onChange={e => setGithubLink(e.target.value)}
+                placeholder="https://github.com/username/project"
+                className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-750 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 text-slate-800 dark:text-slate-100 placeholder-slate-400"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
+                LinkedIn Post / Profile Link
+              </label>
+              <input
+                type="url"
+                value={linkedinLink}
+                onChange={e => setLinkedinLink(e.target.value)}
+                placeholder="https://linkedin.com/in/username"
+                className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-750 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 text-slate-800 dark:text-slate-100 placeholder-slate-400"
+              />
             </div>
           </div>
         </div>
@@ -252,11 +299,10 @@ export const UploadActivity: React.FC = () => {
               onDragOver={e => { e.preventDefault(); setDragOver(true); }}
               onDragLeave={() => setDragOver(false)}
               onClick={() => fileInputRef.current?.click()}
-              className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all ${
-                dragOver
-                  ? 'border-brand-500 bg-brand-50 dark:bg-brand-950/20'
-                  : 'border-slate-200 dark:border-slate-700 hover:border-brand-300 dark:hover:border-brand-700 hover:bg-slate-50 dark:hover:bg-slate-800/50'
-              }`}
+              className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all ${dragOver
+                ? 'border-brand-500 bg-brand-50 dark:bg-brand-950/20'
+                : 'border-slate-200 dark:border-slate-700 hover:border-brand-300 dark:hover:border-brand-700 hover:bg-slate-50 dark:hover:bg-slate-800/50'
+                }`}
             >
               <UploadCloud className={`mx-auto h-10 w-10 mb-3 transition-colors ${dragOver ? 'text-brand-500' : 'text-slate-300 dark:text-slate-700'}`} />
               <p className="text-sm font-semibold text-slate-600 dark:text-slate-400">

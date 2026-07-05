@@ -4,14 +4,16 @@ import { activityAPI } from '../../services/api';
 import { CheckCircle, XCircle, FileText, User, Calendar, Loader2, AlertTriangle } from 'lucide-react';
 
 interface Activity {
-  id: number;
+  id: string;
   title: string;
   description: string;
   type: string;
   status: string;
   uploadDate: string;
   filePath: string | null;
-  student: { id: number; name: string; email: string; department: string | null };
+  githubLink?: string | null;
+  linkedinLink?: string | null;
+  student: { id: string; name: string; email: string; department: string | null };
 }
 
 export const ReviewActivity: React.FC = () => {
@@ -26,7 +28,7 @@ export const ReviewActivity: React.FC = () => {
 
   useEffect(() => {
     if (!id) return;
-    const activityId = Number(id);
+    const activityId = id;
     activityAPI.getActivityById(activityId)
       .then(({ data }) => {
         setActivity(data);
@@ -103,6 +105,33 @@ export const ReviewActivity: React.FC = () => {
         <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-300">Activity Details</h3>
         <p className="mt-2 text-slate-600 dark:text-slate-400"><strong>{activity.title}</strong> ({activity.type})</p>
         <p className="mt-2 text-slate-600 dark:text-slate-400 whitespace-pre-line">{activity.description}</p>
+        
+        {/* Render links if present */}
+        {(activity.githubLink || activity.linkedinLink) && (
+          <div className="mt-4 flex flex-wrap gap-3">
+            {activity.githubLink && (
+              <a
+                href={activity.githubLink}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 px-3 py-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-750 transition-colors"
+              >
+                GitHub Repository
+              </a>
+            )}
+            {activity.linkedinLink && (
+              <a
+                href={activity.linkedinLink}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 px-3 py-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-750 transition-colors"
+              >
+                LinkedIn Reference
+              </a>
+            )}
+          </div>
+        )}
+
         {activity.filePath && (
           <a
             href={`http://localhost:5000/uploads/${activity.filePath}`}

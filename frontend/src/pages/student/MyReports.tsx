@@ -182,10 +182,6 @@ export const MyReports: React.FC = () => {
                     <Download className="h-3.5 w-3.5" />
                     Download Report
                   </button>
-                  <button className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400 rounded-xl transition-colors">
-                    <RefreshCw className="h-3.5 w-3.5" />
-                    Share with Mentor
-                  </button>
                 </div>
               </div>
             );

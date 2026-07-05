@@ -1,13 +1,15 @@
 import express from 'express';
 import multer from 'multer';
 import { PrismaClient } from '@prisma/client';
-import { authMiddleware, AuthRequest } from '../auth';
+import { authMiddleware, requireRole, AuthRequest } from '../auth';
 import { sendNotificationEmail } from '../utils/mailer';
 import { imagekit } from '../utils/imagekit';
 import path from 'path';
 
 const router = express.Router();
 const prisma = new PrismaClient();
+
+router.use(authMiddleware);
 
 // Multer Config — use memory storage so we can stream to ImageKit
 const upload = multer({
@@ -30,18 +32,26 @@ const upload = multer({
 const uploadToImageKit = async (buffer: Buffer, originalName: string): Promise<string> => {
   const fileName = `${Date.now()}-${path.basename(originalName)}`;
   const base64 = buffer.toString('base64');
-  const response = await imagekit.files.upload({
-    file: base64,
-    fileName,
-    folder: '/edutrack',
-  });
-  return (response as any).url;
+  console.log(`[IMAGEKIT] Uploading file: ${fileName} (${buffer.length} bytes)`);
+  try {
+    const response = await imagekit.files.upload({
+      file: base64,
+      fileName,
+      folder: '/edutrack',
+    });
+    const url = (response as any).url;
+    console.log(`[IMAGEKIT] Upload success: ${url}`);
+    return url;
+  } catch (err: any) {
+    console.error('[IMAGEKIT] Upload failed:', err?.message || err);
+    throw err;
+  }
 };
 
 // Student upload activity
-router.post('/upload', authMiddleware, upload.single('file'), async (req: AuthRequest, res) => {
+router.post('/upload', requireRole(['STUDENT', 'ADMIN']), upload.single('file'), async (req: AuthRequest, res) => {
   try {
-    const { title, description, type, credits } = req.body;
+    const { title, description, type, credits, githubLink, linkedinLink } = req.body;
     const userId = req.userId!;
 
     if (!title || !description || !type) {
@@ -73,6 +83,8 @@ router.post('/upload', authMiddleware, upload.single('file'), async (req: AuthRe
         status: 'SUBMITTED',
         filePath: fileUrl,
         credits: credits ? parseInt(credits) : 1,
+        githubLink: githubLink || null,
+        linkedinLink: linkedinLink || null,
       },
     });
 
@@ -93,7 +105,7 @@ router.post('/upload', authMiddleware, upload.single('file'), async (req: AuthRe
 });
 
 // Get student's own activities
-router.get('/my-activities', authMiddleware, async (req: AuthRequest, res) => {
+router.get('/my-activities', requireRole(['STUDENT', 'ADMIN']), async (req: AuthRequest, res) => {
   try {
     const userId = req.userId!;
     const activities = await prisma.activity.findMany({
@@ -113,7 +125,7 @@ router.get('/my-activities', authMiddleware, async (req: AuthRequest, res) => {
 });
 
 // Get all activities (filtered for Mentor/Admin review)
-router.get('/all', authMiddleware, async (req: AuthRequest, res) => {
+router.get('/all', requireRole(['MENTOR', 'ADMIN', 'FACULTY']), async (req: AuthRequest, res) => {
   try {
     const role = req.userRole;
     const userId = req.userId!;
@@ -154,7 +166,7 @@ router.get('/all', authMiddleware, async (req: AuthRequest, res) => {
 });
 
 // Start activity review (State: SUBMITTED -> UNDER_REVIEW)
-router.post('/:id/review', authMiddleware, async (req: AuthRequest, res) => {
+router.post('/:id/review', requireRole(['MENTOR', 'ADMIN']), async (req: AuthRequest, res) => {
   try {
     const { id } = req.params;
     const activityId = id;
@@ -183,7 +195,7 @@ router.post('/:id/review', authMiddleware, async (req: AuthRequest, res) => {
 });
 
 // Mentor Approve activity
-router.post('/:id/approve', authMiddleware, async (req: AuthRequest, res) => {
+router.post('/:id/approve', requireRole(['MENTOR', 'ADMIN']), async (req: AuthRequest, res) => {
   try {
     const { id } = req.params;
     const { feedback } = req.body;
@@ -231,7 +243,7 @@ router.post('/:id/approve', authMiddleware, async (req: AuthRequest, res) => {
 });
 
 // Mentor Reject activity
-router.post('/:id/reject', authMiddleware, async (req: AuthRequest, res) => {
+router.post('/:id/reject', requireRole(['MENTOR', 'ADMIN']), async (req: AuthRequest, res) => {
   try {
     const { id } = req.params;
     const { feedback } = req.body;
@@ -283,10 +295,10 @@ router.post('/:id/reject', authMiddleware, async (req: AuthRequest, res) => {
 });
 
 // Student Resubmit activity
-router.put('/:id/resubmit', authMiddleware, upload.single('file'), async (req: AuthRequest, res) => {
+router.put('/:id/resubmit', requireRole(['STUDENT', 'ADMIN']), upload.single('file'), async (req: AuthRequest, res) => {
   try {
     const { id } = req.params;
-    const { title, description, type, credits } = req.body;
+    const { title, description, type, credits, githubLink, linkedinLink } = req.body;
     const userId = req.userId!;
     const activityId = id;
 
@@ -318,6 +330,8 @@ router.put('/:id/resubmit', authMiddleware, upload.single('file'), async (req: A
         status: 'SUBMITTED',
         filePath: newFileUrl,
         credits: credits ? parseInt(credits) : activity.credits,
+        githubLink: githubLink !== undefined ? (githubLink || null) : activity.githubLink,
+        linkedinLink: linkedinLink !== undefined ? (linkedinLink || null) : activity.linkedinLink,
         uploadDate: new Date(), // Reset upload date to now
       },
     });
@@ -339,7 +353,7 @@ router.put('/:id/resubmit', authMiddleware, upload.single('file'), async (req: A
 });
 
 // Bulk approve endpoint for mentors
-router.post('/bulk-approve', authMiddleware, async (req: AuthRequest, res) => {
+router.post('/bulk-approve', requireRole(['MENTOR', 'ADMIN']), async (req: AuthRequest, res) => {
   try {
     const { activityIds, feedback } = req.body;
     const mentorId = req.userId!;
@@ -383,6 +397,63 @@ router.post('/bulk-approve', authMiddleware, async (req: AuthRequest, res) => {
   } catch (error) {
     console.error('Bulk approval error:', error);
     res.status(500).json({ error: 'Bulk approval failed' });
+  }
+});
+
+// Get activity details
+router.get('/:id', requireRole(['STUDENT', 'MENTOR', 'ADMIN', 'FACULTY']), async (req: AuthRequest, res) => {
+  try {
+    const { id } = req.params;
+    const activity = await prisma.activity.findUnique({
+      where: { id },
+      include: {
+        student: {
+          select: { id: true, name: true, email: true, department: true }
+        },
+        approvals: {
+          orderBy: { reviewDate: 'desc' },
+          include: { mentor: { select: { name: true, email: true } } },
+        },
+      },
+    });
+
+    if (!activity) {
+      return res.status(404).json({ error: 'Activity not found' });
+    }
+
+    res.json(activity);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch activity details' });
+  }
+});
+
+// Delete an activity
+router.delete('/:id', requireRole(['STUDENT', 'ADMIN']), async (req: AuthRequest, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.userId!;
+    const role = req.userRole!;
+
+    const activity = await prisma.activity.findUnique({
+      where: { id },
+    });
+
+    if (!activity) {
+      return res.status(404).json({ error: 'Activity not found' });
+    }
+
+    // Students can only delete their own activities
+    if (role === 'STUDENT' && activity.studentId !== userId) {
+      return res.status(403).json({ error: 'Forbidden: You can only delete your own activities' });
+    }
+
+    await prisma.activity.delete({
+      where: { id },
+    });
+
+    res.json({ message: 'Activity deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete activity' });
   }
 });
 

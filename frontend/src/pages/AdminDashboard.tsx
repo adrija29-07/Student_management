@@ -22,18 +22,18 @@ import {
 } from 'recharts';
 
 interface User {
-  id: number;
+  id: string;
   email: string;
   name: string;
   role: string;
   department: string | null;
   isActive: boolean;
-  mentor?: { id: number; name: string };
-  students?: Array<{ id: number; name: string }>;
+  mentor?: { id: string; name: string };
+  students?: Array<{ id: string; name: string }>;
 }
 
 interface AuditLog {
-  id: number;
+  id: string;
   action: string;
   details: string;
   timestamp: string;
@@ -146,7 +146,7 @@ export const AdminDashboard: React.FC = () => {
     }
   };
 
-  const handleChangeRole = async (userId: number, role: string) => {
+  const handleChangeRole = async (userId: string, role: string) => {
     try {
       await adminAPI.updateUser(userId, { role });
       alert('User role updated successfully');
@@ -156,8 +156,8 @@ export const AdminDashboard: React.FC = () => {
     }
   };
 
-  const handleAssignMentor = async (studentId: number, mentorIdStr: string) => {
-    const mentorId = mentorIdStr === 'null' ? null : parseInt(mentorIdStr);
+  const handleAssignMentor = async (studentId: string, mentorIdStr: string) => {
+    const mentorId = mentorIdStr === 'null' ? null : mentorIdStr;
     try {
       await adminAPI.assignMentor(studentId, mentorId);
       alert('Mentor reassigned successfully.');
@@ -470,6 +470,7 @@ export const AdminDashboard: React.FC = () => {
                           >
                             <option value="STUDENT">STUDENT</option>
                             <option value="MENTOR">MENTOR</option>
+                            <option value="FACULTY">FACULTY</option>
                             <option value="ADMIN">ADMIN</option>
                           </select>
                         </td>
@@ -811,6 +812,7 @@ export const AdminDashboard: React.FC = () => {
                   >
                     <option value="STUDENT">STUDENT</option>
                     <option value="MENTOR">MENTOR</option>
+                    <option value="FACULTY">FACULTY</option>
                     <option value="ADMIN">ADMIN</option>
                   </select>
                 </div>

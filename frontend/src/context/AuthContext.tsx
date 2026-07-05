@@ -2,13 +2,14 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { authAPI } from '../services/api';
 
 interface User {
-  id: number;
+  id: string;
   email: string;
   name: string;
   role: string;
   department: string | null;
+  interestedFields?: string[];
   mentor?: {
-    id: number;
+    id: string;
     name: string;
     email: string;
   };
@@ -18,16 +19,19 @@ interface AuthContextType {
   user: User | null;
   token: string | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<User>;
   logout: () => void;
-  register: (email: string, password: string, name: string, role: string, department?: string) => Promise<void>;
+  register: (email: string, password: string, name: string, role: string, department?: string, interestedFields?: string[]) => Promise<User>;
   refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<User | null>(() => {
+    const savedUser = localStorage.getItem('user');
+    return savedUser ? JSON.parse(savedUser) : null;
+  });
   const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
   const [loading, setLoading] = useState(true);
 
@@ -35,6 +39,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const { data } = await authAPI.getCurrentUser();
       setUser(data);
+      localStorage.setItem('user', JSON.stringify(data));
     } catch (err) {
       console.error('Failed to fetch user session:', err);
       logout();
@@ -56,21 +61,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const { data } = await authAPI.login(email, password);
       localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
       setToken(data.token);
       setUser(data.user);
+      return data.user;
     } catch (err: any) {
       setLoading(false);
       throw new Error(err.response?.data?.error || 'Login failed');
     }
   };
 
-  const register = async (email: string, password: string, name: string, role: string, department?: string) => {
+  const register = async (email: string, password: string, name: string, role: string, department?: string, interestedFields?: string[]) => {
     setLoading(true);
     try {
-      const { data } = await authAPI.register(email, password, name, role, department);
+      const { data } = await authAPI.register(email, password, name, role, department, interestedFields);
       localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
       setToken(data.token);
       setUser(data.user);
+      return data.user;
     } catch (err: any) {
       setLoading(false);
       throw new Error(err.response?.data?.error || 'Registration failed');
@@ -79,6 +88,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('user');
     setToken(null);
     setUser(null);
     setLoading(false);
@@ -89,6 +99,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         const { data } = await authAPI.getCurrentUser();
         setUser(data);
+        localStorage.setItem('user', JSON.stringify(data));
       } catch (err) {
         console.error('Error refreshing user details:', err);
       }

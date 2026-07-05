@@ -8,14 +8,15 @@ generator client {
 }
 
 model User {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  email       String   @unique
-  password    String
-  name        String
-  role        String   // STUDENT, MENTOR, ADMIN
-  department  String?  // CSE, ECE, MECH, etc.
-  createdAt   DateTime @default(now())
-  isActive    Boolean  @default(true)
+  id               String   @id @default(auto()) @map("_id") @db.ObjectId
+  email            String   @unique
+  password         String
+  name             String
+  role             String   // STUDENT, MENTOR, ADMIN
+  department       String?  // CSE, ECE, MECH, etc.
+  interestedFields String[] // Fields of interest
+  createdAt        DateTime @default(now())
+  isActive         Boolean  @default(true)
   
   studentActivities Activity[]         @relation("StudentActivities")
   approvals         ActivityApproval[]
@@ -29,15 +30,17 @@ model User {
 }
 
 model Activity {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  studentId   String   @db.ObjectId
-  title       String
-  description String
-  type        String   // Workshop, Project, Volunteer, Internship, etc.
-  uploadDate  DateTime @default(now())
-  status      String   // SUBMITTED, UNDER_REVIEW, APPROVED, REJECTED
-  filePath    String?
-  credits     Int      @default(1)
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  studentId    String   @db.ObjectId
+  title        String
+  description  String
+  type         String   // Workshop, Project, Volunteer, Internship, etc.
+  uploadDate   DateTime @default(now())
+  status       String   // SUBMITTED, UNDER_REVIEW, APPROVED, REJECTED
+  filePath     String?
+  credits      Int      @default(1)
+  githubLink   String?
+  linkedinLink String?
   
   student     User     @relation("StudentActivities", fields: [studentId], references: [id], onDelete: Cascade)
   approvals   ActivityApproval[]

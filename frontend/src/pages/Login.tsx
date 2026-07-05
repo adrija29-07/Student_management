@@ -17,18 +17,15 @@ export const Login: React.FC = () => {
     setLoading(true);
 
     try {
-      await login(email, password);
-      // Wait briefly for token persistence then fetch user from storage
-      const rawUser = localStorage.getItem('user');
-      const user = rawUser ? JSON.parse(rawUser) : null;
-      const role = user?.role || 'STUDENT';
-      
-      if (role === 'ADMIN') {
-        navigate('/admin');
-      } else if (role === 'MENTOR') {
-        navigate('/mentor');
+      const user = await login(email, password);
+      if (user.role === 'ADMIN') {
+        navigate('/admin/dashboard');
+      } else if (user.role === 'MENTOR') {
+        navigate('/mentor/dashboard');
+      } else if (user.role === 'FACULTY') {
+        navigate('/faculty/dashboard');
       } else {
-        navigate('/dashboard');
+        navigate('/student/dashboard');
       }
     } catch (err: any) {
       setError(err.message || 'Login failed. Please verify your credentials.');
