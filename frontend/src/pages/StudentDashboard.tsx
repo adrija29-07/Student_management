@@ -293,26 +293,53 @@ export const StudentDashboard: React.FC = () => {
     link.click();
   };
 
-  const missingFields = (user?.interestedFields || []).filter(
-    (field) => !activities.some((act) => 
+  const interests = user?.interestedFields || [];
+  const missingHobbies = interests.filter(item => {
+    const isHobby = ['⚽', '🎵', '💃', '🎨', '🎮', '📚', '📸', '✈️', '🍳', '🎭', 'sports', 'music', 'dance', 'art', 'gaming', 'reading', 'photo', 'travel', 'cook', 'theatre'].some(kw => item.toLowerCase().includes(kw));
+    if (!isHobby) return false;
+    const cleanField = item.replace(/[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF]/g, '').trim().toLowerCase();
+    return !activities.some(act => 
       act.status === 'APPROVED' && 
-      (act.title.toLowerCase().includes(field.toLowerCase()) || 
-       act.description.toLowerCase().includes(field.toLowerCase()) ||
-       act.type.toLowerCase().includes(field.toLowerCase()))
-    )
-  );
+      (act.title.toLowerCase().includes(cleanField) || 
+       act.description.toLowerCase().includes(cleanField) ||
+       act.type.toLowerCase().includes(cleanField))
+    );
+  });
+
+  const missingAcademics = interests.filter(item => {
+    const isHobby = ['⚽', '🎵', '💃', '🎨', '🎮', '📚', '📸', '✈️', '🍳', '🎭', 'sports', 'music', 'dance', 'art', 'gaming', 'reading', 'photo', 'travel', 'cook', 'theatre'].some(kw => item.toLowerCase().includes(kw));
+    if (isHobby) return false;
+    const cleanField = item.replace(/[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF]/g, '').trim().toLowerCase();
+    return !activities.some(act => 
+      act.status === 'APPROVED' && 
+      (act.title.toLowerCase().includes(cleanField) || 
+       act.description.toLowerCase().includes(cleanField) ||
+       act.type.toLowerCase().includes(cleanField))
+    );
+  });
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto">
-      {/* Missing Interested Fields Warning */}
-      {missingFields.length > 0 && (
-        <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/50 rounded-2xl p-4 flex items-start gap-3">
-          <AlertTriangle className="h-5 w-5 text-amber-500 mt-0.5" />
-          <div>
-            <h4 className="text-sm font-bold text-amber-800 dark:text-amber-400">Action Recommended</h4>
-            <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
-              You haven't submitted any approved activities covering your interested fields: <strong>{missingFields.join(', ')}</strong>. Try to upload activities in these areas!
-            </p>
+      {/* Gap reminders */}
+      {(missingHobbies.length > 0 || missingAcademics.length > 0) && (
+        <div className="bg-red-50/70 border border-red-200 rounded-2xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0 gap-reminder-pulse" />
+            <div>
+              <h4 className="text-sm font-bold text-red-800">Activity Gap Reminders</h4>
+              <div className="text-xs text-red-700 mt-1 space-y-1">
+                {missingHobbies.length > 0 && (
+                  <div>
+                    ⚠️ You haven't participated in your hobby: <strong>{missingHobbies.join(', ')}</strong>. This indicates a gap in your co-curricular/extracurricular development.
+                  </div>
+                )}
+                {missingAcademics.length > 0 && (
+                  <div>
+                    ⚠️ You have no recent approved submissions for: <strong>{missingAcademics.join(', ')}</strong>. Consider completing matching projects or research to fill your academic skills gap.
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -321,8 +348,8 @@ export const StudentDashboard: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 section-hero text-slate-900 relative overflow-hidden">
           <div className="absolute inset-y-0 right-0 w-full max-w-xl opacity-40 pointer-events-none">
-            <div className="absolute top-10 right-[-70px] h-52 w-52 rounded-full bg-[#ffb830]/20 blur-3xl" />
-            <div className="absolute bottom-8 right-16 h-40 w-40 rounded-full bg-[#f7d8a3]/25 blur-3xl" />
+            <div className="absolute top-10 right-[-70px] h-52 w-52 rounded-full bg-blue-300/20 blur-3xl" />
+            <div className="absolute bottom-8 right-16 h-40 w-40 rounded-full bg-indigo-300/20 blur-3xl" />
           </div>
           <div className="relative z-10 flex flex-col justify-between h-full gap-6">
             <div className="space-y-4 max-w-2xl">
@@ -339,13 +366,13 @@ export const StudentDashboard: React.FC = () => {
             <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
               <button
                 onClick={() => setIsUploadOpen(true)}
-                className="btn-brand shadow-lg shadow-[#ff9c0f]/20"
+                className="btn-brand shadow-lg shadow-blue-500/20"
               >
                 <Plus className="h-5 w-5" />
                 Upload Activity
               </button>
               {user?.mentor ? (
-                <div className="rounded-3xl bg-white/90 border border-brand-100 px-4 py-3 text-sm text-slate-700 shadow-sm">
+                <div className="rounded-3xl bg-white/90 border border-blue-100 px-4 py-3 text-sm text-slate-700 shadow-sm">
                   <div className="text-xs uppercase tracking-[0.2em] text-slate-500">Mentor</div>
                   <div className="mt-1 font-semibold text-slate-900">{user.mentor.name}</div>
                 </div>
@@ -365,7 +392,7 @@ export const StudentDashboard: React.FC = () => {
           <div className="relative flex items-center justify-center">
             <svg className="w-36 h-36">
               <circle
-                className="text-[#fff5e1]"
+                className="text-blue-50"
                 strokeWidth="10"
                 stroke="currentColor"
                 fill="transparent"
@@ -374,7 +401,7 @@ export const StudentDashboard: React.FC = () => {
                 cy="72"
               />
               <circle
-                className="text-brand-500 transition-all duration-500"
+                className="text-blue-600 transition-all duration-500"
                 strokeWidth="10"
                 strokeDasharray={364}
                 strokeDashoffset={364 - (364 * progressPercent) / 100}
@@ -417,23 +444,23 @@ export const StudentDashboard: React.FC = () => {
 
       {/* Statistics Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
-        <div className="section-card border border-[#fff0d6] p-5">
-          <div className="text-[#ff9c0f] mb-1.5"><FileText className="h-5 w-5" /></div>
+        <div className="section-card border border-blue-100/50 p-5">
+          <div className="text-blue-500 mb-1.5"><FileText className="h-5 w-5" /></div>
           <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Submissions</p>
           <p className="text-2xl font-outfit font-bold text-slate-900">{totalSubmissions}</p>
         </div>
-        <div className="section-card border border-[#fff0d6] p-5">
-          <div className="text-[#f59e0b] mb-1.5"><Clock className="h-5 w-5" /></div>
+        <div className="section-card border border-blue-100/50 p-5">
+          <div className="text-amber-500 mb-1.5"><Clock className="h-5 w-5" /></div>
           <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Pending Review</p>
           <p className="text-2xl font-outfit font-bold text-slate-900">{pendingCount}</p>
         </div>
-        <div className="section-card border border-[#fff0d6] p-5">
-          <div className="text-[#34d399] mb-1.5"><CheckCircle className="h-5 w-5" /></div>
+        <div className="section-card border border-blue-100/50 p-5">
+          <div className="text-emerald-500 mb-1.5"><CheckCircle className="h-5 w-5" /></div>
           <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Credits Approved</p>
           <p className="text-2xl font-outfit font-bold text-slate-900">{approvedCredits}</p>
         </div>
-        <div className="section-card border border-[#fff0d6] p-5">
-          <div className="text-[#fb7185] mb-1.5"><XCircle className="h-5 w-5" /></div>
+        <div className="section-card border border-blue-100/50 p-5">
+          <div className="text-rose-500 mb-1.5"><XCircle className="h-5 w-5" /></div>
           <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Rejected</p>
           <p className="text-2xl font-outfit font-bold text-slate-900">{rejectedCount}</p>
         </div>
@@ -459,7 +486,7 @@ export const StudentDashboard: React.FC = () => {
               <p className="text-slate-500 dark:text-slate-400">You haven't submitted any activities yet.</p>
               <button
                 onClick={() => setIsUploadOpen(true)}
-                className="bg-brand-600 hover:bg-brand-500 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-all"
+                className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-all"
               >
                 Upload First Activity
               </button>
@@ -484,7 +511,7 @@ export const StudentDashboard: React.FC = () => {
                       className="hover:bg-slate-50 dark:hover:bg-slate-800/30 cursor-pointer transition-colors group"
                     >
                       <td className="py-4.5 pr-2">
-                        <p className="font-semibold text-sm text-slate-800 dark:text-slate-200 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">
+                        <p className="font-semibold text-sm text-slate-800 dark:text-slate-200 group-hover:text-blue-600 transition-colors">
                           {act.title}
                         </p>
                         <p className="text-xs text-slate-400 mt-0.5">
@@ -516,7 +543,7 @@ export const StudentDashboard: React.FC = () => {
                               e.stopPropagation();
                               startResubmit(act);
                             }}
-                            className="text-xs font-bold text-brand-600 dark:text-brand-400 hover:underline px-2.5 py-1.5 hover:bg-brand-50 dark:hover:bg-brand-950/30 rounded-lg transition-all"
+                            className="text-xs font-bold text-blue-600 hover:underline px-2.5 py-1.5 hover:bg-blue-50 rounded-lg transition-all"
                           >
                             Resubmit
                           </button>
@@ -538,7 +565,7 @@ export const StudentDashboard: React.FC = () => {
             <div className="space-y-6">
               <div className="flex justify-between items-start">
                 <div>
-                  <span className="text-xs bg-brand-500/10 text-brand-600 dark:text-brand-400 px-2.5 py-1 rounded-lg font-bold">
+                  <span className="text-xs bg-blue-500/10 text-blue-600 px-2.5 py-1 rounded-lg font-bold">
                     {selectedActivity.type}
                   </span>
                   <h3 className="font-outfit font-bold text-lg text-slate-800 dark:text-white mt-2">
@@ -580,7 +607,7 @@ export const StudentDashboard: React.FC = () => {
               {selectedActivity.filePath && (
                 <div className="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <FileText className="h-5 w-5 text-brand-500" />
+                    <FileText className="h-5 w-5 text-blue-500" />
                     <span className="text-xs text-slate-600 dark:text-slate-400 truncate max-w-xs">
                       {selectedActivity.filePath.startsWith('http')
                         ? decodeURIComponent(selectedActivity.filePath.split('/').pop()?.replace(/^\d+-/, '') || 'Uploaded File')
@@ -591,7 +618,7 @@ export const StudentDashboard: React.FC = () => {
                     href={selectedActivity.filePath.startsWith('http') ? selectedActivity.filePath : `http://localhost:5000/uploads/${selectedActivity.filePath}`}
                     target="_blank"
                     rel="noreferrer"
-                    className="p-1 text-brand-600 dark:text-brand-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg"
+                    className="p-1 text-blue-600 hover:bg-slate-100 rounded-lg"
                     title="Download document"
                   >
                     <Download className="h-4 w-4" />
@@ -654,7 +681,7 @@ export const StudentDashboard: React.FC = () => {
                   required
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="Leadership Workshop, Python Project, E-Cell Event..."
                 />
               </div>
@@ -667,7 +694,7 @@ export const StudentDashboard: React.FC = () => {
                   <select
                     value={type}
                     onChange={(e) => setType(e.target.value)}
-                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="Workshop">Workshop</option>
                     <option value="Project">Project</option>
@@ -687,7 +714,7 @@ export const StudentDashboard: React.FC = () => {
                     max="5"
                     value={credits}
                     onChange={(e) => setCredits(e.target.value)}
-                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
               </div>
@@ -701,7 +728,7 @@ export const StudentDashboard: React.FC = () => {
                   rows={4}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="Describe your role, what you built/learned, dates attended..."
                 />
               </div>
@@ -715,7 +742,7 @@ export const StudentDashboard: React.FC = () => {
                     type="url"
                     value={githubLink}
                     onChange={(e) => setGithubLink(e.target.value)}
-                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="https://github.com/..."
                   />
                 </div>
@@ -727,7 +754,7 @@ export const StudentDashboard: React.FC = () => {
                     type="url"
                     value={linkedinLink}
                     onChange={(e) => setLinkedinLink(e.target.value)}
-                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="https://linkedin.com/..."
                   />
                 </div>
@@ -740,7 +767,7 @@ export const StudentDashboard: React.FC = () => {
                 <input
                   type="file"
                   onChange={handleFileChange}
-                  className="w-full text-xs text-slate-500 dark:text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-brand-50 file:text-brand-600 dark:file:bg-brand-950/40 dark:file:text-brand-400 hover:file:bg-brand-100"
+                  className="w-full text-xs text-slate-500 dark:text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-600 hover:file:bg-blue-100"
                 />
               </div>
 
@@ -757,7 +784,7 @@ export const StudentDashboard: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2.5 bg-brand-600 hover:bg-brand-500 text-white text-sm font-semibold rounded-xl shadow-md transition-colors"
+                  className="flex-1 px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold rounded-xl shadow-md transition-colors"
                 >
                   Submit Activity
                 </button>
@@ -789,7 +816,7 @@ export const StudentDashboard: React.FC = () => {
                   required
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
@@ -801,7 +828,7 @@ export const StudentDashboard: React.FC = () => {
                   <select
                     value={type}
                     onChange={(e) => setType(e.target.value)}
-                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="Workshop">Workshop</option>
                     <option value="Project">Project</option>
@@ -821,7 +848,7 @@ export const StudentDashboard: React.FC = () => {
                     max="5"
                     value={credits}
                     onChange={(e) => setCredits(e.target.value)}
-                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
               </div>
@@ -835,7 +862,7 @@ export const StudentDashboard: React.FC = () => {
                   rows={4}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
@@ -848,7 +875,7 @@ export const StudentDashboard: React.FC = () => {
                     type="url"
                     value={githubLink}
                     onChange={(e) => setGithubLink(e.target.value)}
-                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
                 <div>
@@ -859,7 +886,7 @@ export const StudentDashboard: React.FC = () => {
                     type="url"
                     value={linkedinLink}
                     onChange={(e) => setLinkedinLink(e.target.value)}
-                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
               </div>
@@ -871,7 +898,7 @@ export const StudentDashboard: React.FC = () => {
                 <input
                   type="file"
                   onChange={handleFileChange}
-                  className="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-brand-50 file:text-brand-600 dark:file:bg-brand-950/40 dark:file:text-brand-400 hover:file:bg-brand-100"
+                  className="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-600 hover:file:bg-blue-100"
                 />
               </div>
 
@@ -888,7 +915,7 @@ export const StudentDashboard: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2.5 bg-brand-600 hover:bg-brand-500 text-white text-sm font-semibold rounded-xl shadow-md transition-colors"
+                  className="flex-1 px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold rounded-xl shadow-md transition-colors"
                 >
                   Resubmit Activity
                 </button>

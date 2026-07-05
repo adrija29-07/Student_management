@@ -3,15 +3,12 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
   LayoutDashboard,
-  CheckSquare,
   Users,
   BarChart3,
   Settings,
   LogOut,
   Menu,
   X,
-  Sun,
-  Moon,
   GraduationCap,
   FileText,
   Upload,
@@ -19,16 +16,9 @@ import {
   Bell,
   ClipboardList,
   UserCheck,
-  Shield,
   FileCog,
   History,
   ChevronRight,
-  CheckCircle,
-  XCircle,
-  PieChart,
-  Rocket,
-  Music,
-  Calendar,
 } from 'lucide-react';
 import { notificationAPI } from '../services/api';
 
@@ -44,19 +34,7 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
   const navigate = useNavigate();
   const location = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [darkMode, setDarkMode] = useState(localStorage.getItem('theme') === 'dark');
   const [unreadCount, setUnreadCount] = useState(0);
-
-  useEffect(() => {
-    const root = window.document.documentElement;
-    if (darkMode) {
-      root.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
-    } else {
-      root.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
-    }
-  }, [darkMode]);
 
   useEffect(() => {
     const notifs = notificationAPI.getNotifications();
@@ -68,8 +46,6 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
     return () => clearInterval(interval);
   }, []);
 
-  const toggleDarkMode = () => setDarkMode(!darkMode);
-
   const navigationItems: SidebarItem[] = [
     // STUDENT
     { name: 'Dashboard', path: '/student/dashboard', icon: <LayoutDashboard className="h-4 w-4" />, roles: ['STUDENT'] },
@@ -79,8 +55,6 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
     { name: 'Reports', path: '/student/reports', icon: <BarChart3 className="h-4 w-4" />, roles: ['STUDENT'] },
     { name: 'Notifications', path: '/student/notifications', icon: <Bell className="h-4 w-4" />, roles: ['STUDENT'] },
     { name: 'Settings', path: '/student/settings', icon: <Settings className="h-4 w-4" />, roles: ['STUDENT'] },
-    // FACULTY
-    { name: 'Dashboard', path: '/faculty/dashboard', icon: <LayoutDashboard className="h-4 w-4" />, roles: ['FACULTY'] },
     // MENTOR
     { name: 'Dashboard', path: '/mentor/dashboard', icon: <LayoutDashboard className="h-4 w-4" />, roles: ['MENTOR'] },
     { name: 'Review Queue', path: '/mentor/review-queue', icon: <ClipboardList className="h-4 w-4" />, roles: ['MENTOR'] },
@@ -104,12 +78,10 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
     '/student/reports': 'My Reports',
     '/student/notifications': 'Notifications',
     '/student/settings': 'Settings',
-    '/faculty/dashboard': 'Faculty Dashboard',
     '/mentor/dashboard': 'Mentor Dashboard',
     '/mentor/review-queue': 'Review Queue',
     '/mentor/review': 'Review Activity',
     '/mentor/my-students': 'My Students',
-    // Removed: Activity Verification, Club & Teams, Department Insights, Events
     '/mentor/notifications': 'Notifications',
     '/mentor/reports': 'Reports',
     '/mentor/settings': 'Settings',
@@ -130,53 +102,66 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
     location.pathname.startsWith(path)
   )?.[1] || 'Dashboard';
 
+  const deptColor = user?.department === 'CSE' ? '#3b82f6'
+    : user?.department === 'IT' ? '#8b5cf6'
+    : user?.department === 'ECE' ? '#10b981'
+    : user?.department === 'MECH' ? '#f59e0b'
+    : user?.department === 'CIVIL' ? '#ef4444'
+    : '#2563eb';
+
   const SidebarContent = () => (
     <>
       <div className="flex-1 flex flex-col overflow-y-auto">
-        <nav className="p-3 space-y-0.5">
+        <nav className="p-3 space-y-0.5 mt-2">
           {activeItems.map((item) => {
             const isActive = location.pathname === item.path ||
               (item.path !== '/student/dashboard' && item.path !== '/mentor/dashboard' && item.path !== '/admin/dashboard' && location.pathname.startsWith(item.path));
-            const isNotif = item.path === '/student/notifications';
+            const isNotif = item.path === '/student/notifications' || item.path === '/mentor/notifications';
             return (
               <button
-                key={item.name}
+                key={item.name + item.path}
                 onClick={() => { navigate(item.path); setIsSidebarOpen(false); }}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-150 group relative ${
                   isActive
-                    ? 'bg-brand-600 text-white shadow-md shadow-brand-500/20'
-                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white'
+                    ? 'bg-white/15 text-white shadow-sm'
+                    : 'text-blue-100/70 hover:bg-white/10 hover:text-white'
                 }`}
               >
-                <span className="flex-shrink-0">{item.icon}</span>
+                <span className={`flex-shrink-0 ${isActive ? 'text-white' : 'text-blue-300'}`}>
+                  {item.icon}
+                </span>
                 <span className="flex-1 text-left">{item.name}</span>
                 {isNotif && unreadCount > 0 && (
                   <span className="bg-rose-500 text-white text-xs font-bold rounded-full h-4 min-w-4 px-1 flex items-center justify-center">
                     {unreadCount > 9 ? '9+' : unreadCount}
                   </span>
                 )}
-                {isActive && <ChevronRight className="h-3 w-3 opacity-60 flex-shrink-0" />}
+                {isActive && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-blue-300 rounded-full" />}
               </button>
             );
           })}
         </nav>
       </div>
 
-      <div className="p-3 border-t border-slate-200 dark:border-slate-800 space-y-2">
-        <div className="flex items-center gap-3 px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800/50">
-          <div className="h-8 w-8 rounded-full bg-gradient-to-br from-brand-500 to-indigo-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+      {/* User Card at bottom */}
+      <div className="p-3 border-t border-white/10 space-y-2">
+        <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-white/10">
+          <div
+            className="h-8 w-8 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0"
+            style={{ background: `linear-gradient(135deg, ${deptColor}, #1e40af)` }}
+          >
             {user?.name.charAt(0).toUpperCase()}
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-xs font-bold truncate text-slate-800 dark:text-slate-200 uppercase">{user?.name}</p>
-            <p className="text-xs text-slate-500 dark:text-slate-400 truncate uppercase font-semibold">
-              {user?.role}{user?.department ? ` - ${user.department}` : ''}
+            <p className="text-xs font-bold truncate text-white uppercase">{user?.name}</p>
+            <p className="text-xs text-blue-200 truncate font-semibold">
+              {user?.role}{user?.department ? ` · ${user.department}` : ''}
             </p>
           </div>
         </div>
         <button
           onClick={handleLogout}
-          className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-rose-600 dark:text-rose-400 rounded-xl hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-colors"
+          className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-red-300 rounded-xl hover:bg-white/10 hover:text-red-200 transition-colors"
         >
           <LogOut className="h-4 w-4" />
           Sign Out
@@ -186,14 +171,18 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
   );
 
   return (
-    <div className="flex h-screen bg-[#fff7ef] overflow-hidden">
-      {/* Desktop Sidebar */}
-      <aside className="hidden md:flex md:flex-shrink-0 md:w-56 flex-col bg-white border-r border-[#fde5c5] transition-colors duration-200 shadow-sm">
-        <div className="flex items-center gap-2.5 px-4 h-14 border-b border-[#fde5c5]">
-          <div className="h-7 w-7 rounded-lg bg-[#ff9c0f] flex items-center justify-center">
+    <div className="flex h-screen overflow-hidden" style={{ background: '#f0f4ff' }}>
+      {/* Desktop Sidebar — Dark Navy */}
+      <aside
+        className="hidden md:flex md:flex-shrink-0 md:w-56 flex-col transition-colors duration-200"
+        style={{ background: 'linear-gradient(180deg, #1e3a5f 0%, #0f2748 100%)' }}
+      >
+        {/* Logo */}
+        <div className="flex items-center gap-2.5 px-4 h-14 border-b border-white/10">
+          <div className="h-7 w-7 rounded-lg bg-blue-500 flex items-center justify-center shadow-lg shadow-blue-500/30">
             <GraduationCap className="h-4 w-4 text-white" />
           </div>
-          <span className="font-outfit font-bold text-lg tracking-tight text-slate-800">EduTrack</span>
+          <span className="font-outfit font-bold text-lg tracking-tight text-white">EduTrack</span>
         </div>
         <SidebarContent />
       </aside>
@@ -201,17 +190,20 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
       {/* Mobile Drawer */}
       {isSidebarOpen && (
         <div className="fixed inset-0 z-50 flex md:hidden">
-          <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={() => setIsSidebarOpen(false)} />
-          <div className="relative flex flex-col w-full max-w-xs bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800">
-            <div className="flex items-center justify-between px-4 h-14 border-b border-slate-200 dark:border-slate-800">
+          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setIsSidebarOpen(false)} />
+          <div
+            className="relative flex flex-col w-full max-w-xs"
+            style={{ background: 'linear-gradient(180deg, #1e3a5f 0%, #0f2748 100%)' }}
+          >
+            <div className="flex items-center justify-between px-4 h-14 border-b border-white/10">
               <div className="flex items-center gap-2">
-                <div className="h-7 w-7 rounded-lg bg-[#ff9c0f] flex items-center justify-center">
+                <div className="h-7 w-7 rounded-lg bg-blue-500 flex items-center justify-center">
                   <GraduationCap className="h-4 w-4 text-white" />
                 </div>
-                <span className="font-outfit font-bold text-lg text-slate-800 dark:text-white">EduTrack</span>
+                <span className="font-outfit font-bold text-lg text-white">EduTrack</span>
               </div>
-              <button onClick={() => setIsSidebarOpen(false)} className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800">
-                <X className="h-5 w-5 text-slate-500" />
+              <button onClick={() => setIsSidebarOpen(false)} className="p-1.5 rounded-lg hover:bg-white/10 text-white">
+                <X className="h-5 w-5" />
               </button>
             </div>
             <SidebarContent />
@@ -221,50 +213,46 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        <header className="h-14 flex items-center justify-between px-4 sm:px-6 bg-[#fff7ef] border-b border-[#fde5c5] transition-colors duration-200 flex-shrink-0">
+        {/* Top Header */}
+        <header className="h-14 flex items-center justify-between px-4 sm:px-6 bg-white border-b border-blue-100 shadow-sm flex-shrink-0">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setIsSidebarOpen(true)}
-              className="md:hidden p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
+              className="md:hidden p-1.5 rounded-lg text-slate-500 hover:bg-blue-50"
             >
               <Menu className="h-5 w-5" />
             </button>
-            <h1 className="font-outfit font-semibold text-base text-slate-800 dark:text-slate-100">
+            <h1 className="font-outfit font-semibold text-base text-slate-800">
               {currentTitle}
             </h1>
           </div>
 
           <div className="flex items-center gap-2">
-            {/* Notification Bell (student only) */}
-            {user?.role === 'STUDENT' && (
+            {/* Notification Bell */}
+            {(user?.role === 'STUDENT' || user?.role === 'MENTOR') && (
               <button
-                onClick={() => navigate('/student/notifications')}
-                className="relative p-2 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                onClick={() => navigate(user?.role === 'STUDENT' ? '/student/notifications' : '/mentor/notifications')}
+                className="relative p-2 rounded-xl text-slate-500 hover:bg-blue-50 transition-colors"
                 aria-label="Notifications"
               >
                 <Bell className="h-4 w-4" />
                 {unreadCount > 0 && (
-                  <span className="absolute top-1 right-1 h-2 w-2 bg-rose-500 rounded-full ring-2 ring-white dark:ring-slate-900" />
+                  <span className="absolute top-1 right-1 h-2 w-2 bg-rose-500 rounded-full ring-2 ring-white" />
                 )}
               </button>
             )}
-            <button
-              onClick={toggleDarkMode}
-              className="p-2 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-              aria-label="Toggle Theme"
-            >
-              {darkMode ? <Sun className="h-4 w-4 text-amber-500" /> : <Moon className="h-4 w-4" />}
-            </button>
-            <div className="hidden sm:flex items-center gap-2 border-l border-slate-200 dark:border-slate-800 pl-3 ml-1">
-              <div className="h-7 w-7 rounded-full bg-gradient-to-br from-brand-500 to-indigo-600 flex items-center justify-center text-white font-bold text-xs">
+
+            <div className="hidden sm:flex items-center gap-2 border-l border-blue-100 pl-3 ml-1">
+              <div
+                className="h-7 w-7 rounded-full flex items-center justify-center text-white font-bold text-xs flex-shrink-0"
+                style={{ background: `linear-gradient(135deg, ${deptColor}, #1d4ed8)` }}
+              >
                 {user?.name.charAt(0).toUpperCase()}
               </div>
               <div className="hidden lg:flex flex-col">
-                <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                  {user?.name}
-                </span>
+                <span className="text-sm font-semibold text-slate-700">{user?.name}</span>
                 {user?.department && (
-                  <span className="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 -mt-0.5">
+                  <span className="text-[10px] uppercase font-bold text-blue-500 -mt-0.5">
                     {user.department}
                   </span>
                 )}

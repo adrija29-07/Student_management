@@ -5,7 +5,7 @@ import { Login } from './pages/Login';
 import { Register } from './pages/Register';
 import { StudentDashboard } from './pages/StudentDashboard';
 import { AdminDashboard } from './pages/AdminDashboard';
-import { FacultyDashboard } from './pages/FacultyDashboard';
+
 import { DashboardLayout } from './components/DashboardLayout';
 
 import { MentorHome } from './pages/mentor/MentorHome';
@@ -63,7 +63,7 @@ const RoleProtectedRoute: React.FC<{ children: React.ReactNode; roles: string[] 
     // Dynamic fallback based on what role they are
     if (user?.role === 'ADMIN') return <Navigate to="/admin/dashboard" replace />;
     if (user?.role === 'MENTOR') return <Navigate to="/mentor/dashboard" replace />;
-    if (user?.role === 'FACULTY') return <Navigate to="/faculty/dashboard" replace />;
+
     return <Navigate to="/student/dashboard" replace />;
   }
 
@@ -86,7 +86,7 @@ const RootRedirect: React.FC = () => {
 
   if (user?.role === 'ADMIN') return <Navigate to="/admin/dashboard" replace />;
   if (user?.role === 'MENTOR') return <Navigate to="/mentor/dashboard" replace />;
-  if (user?.role === 'FACULTY') return <Navigate to="/faculty/dashboard" replace />;
+
   return <Navigate to="/student/dashboard" replace />;
 };
 
@@ -154,21 +154,7 @@ export default function App() {
             } 
           />
 
-          <Route 
-            path="/faculty/*" 
-            element={
-              <ProtectedRoute>
-                <RoleProtectedRoute roles={['FACULTY']}>
-                  <DashboardLayout>
-                    <Routes>
-                      <Route index element={<Navigate to="dashboard" replace />} />
-                      <Route path="dashboard" element={<FacultyDashboard />} />
-                    </Routes>
-                  </DashboardLayout>
-                </RoleProtectedRoute>
-              </ProtectedRoute>
-            } 
-          />
+
           
           <Route 
             path="/admin" 

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { GraduationCap, Lock, Mail, ArrowRight, Loader2 } from 'lucide-react';
+import { GraduationCap, Lock, Mail, ArrowRight, Loader2, BookOpen } from 'lucide-react';
 
 export const Login: React.FC = () => {
   const { login } = useAuth();
@@ -22,8 +22,6 @@ export const Login: React.FC = () => {
         navigate('/admin/dashboard');
       } else if (user.role === 'MENTOR') {
         navigate('/mentor/dashboard');
-      } else if (user.role === 'FACULTY') {
-        navigate('/faculty/dashboard');
       } else {
         navigate('/student/dashboard');
       }
@@ -35,39 +33,50 @@ export const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-tr from-slate-900 via-indigo-950 to-slate-900 px-4 py-12 sm:px-6 lg:px-8">
-      {/* Decorative Gradients */}
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-brand-500/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
+    <div
+      className="min-h-screen flex items-center justify-center px-4 py-12"
+      style={{ background: 'linear-gradient(135deg, #dbeafe 0%, #eff6ff 50%, #e0e7ff 100%)' }}
+    >
+      {/* Decorative blobs */}
+      <div className="fixed top-0 left-0 w-full h-full pointer-events-none overflow-hidden">
+        <div className="absolute -top-24 -left-24 w-96 h-96 bg-blue-300/20 rounded-full blur-3xl" />
+        <div className="absolute top-1/2 -right-32 w-80 h-80 bg-indigo-300/20 rounded-full blur-3xl" />
+        <div className="absolute -bottom-16 left-1/3 w-64 h-64 bg-blue-200/25 rounded-full blur-2xl" />
+      </div>
 
-      <div className="max-w-md w-full space-y-8 glass-card p-8 sm:p-10 shadow-2xl relative z-10">
-        <div className="text-center">
-          <div className="mx-auto h-12 w-12 rounded-2xl bg-brand-600 flex items-center justify-center text-white shadow-lg shadow-brand-500/30">
-            <GraduationCap className="h-7 w-7" />
+      <div className="w-full max-w-md relative z-10">
+        {/* Card */}
+        <div className="bg-white rounded-3xl shadow-2xl shadow-blue-200/50 p-8 sm:p-10 border border-blue-100">
+          {/* Header */}
+          <div className="text-center mb-8">
+            <div
+              className="mx-auto h-14 w-14 rounded-2xl flex items-center justify-center text-white shadow-lg mb-4"
+              style={{ background: 'linear-gradient(135deg, #2563eb, #1d4ed8)' }}
+            >
+              <GraduationCap className="h-7 w-7" />
+            </div>
+            <h2 className="text-3xl font-outfit font-extrabold text-slate-800 tracking-tight">
+              Welcome Back
+            </h2>
+            <p className="mt-1.5 text-sm text-slate-500">
+              Sign in to your EduTrack account
+            </p>
           </div>
-          <h2 className="mt-6 text-3xl font-outfit font-extrabold text-white tracking-tight">
-            Welcome Back
-          </h2>
-          <p className="mt-2 text-sm text-slate-400">
-            Access your student or mentor tracking center
-          </p>
-        </div>
 
-        {error && (
-          <div className="bg-rose-500/10 border border-rose-500/30 text-rose-200 text-sm rounded-xl p-4 text-center">
-            {error}
-          </div>
-        )}
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-600 text-sm rounded-xl p-3.5 mb-5 text-center">
+              {error}
+            </div>
+          )}
 
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label htmlFor="email" className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
+              <label htmlFor="email" className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
                 Email Address
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                  <Mail className="h-5 w-5" />
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-blue-400">
+                  <Mail className="h-4.5 w-4.5" />
                 </div>
                 <input
                   id="email"
@@ -76,19 +85,19 @@ export const Login: React.FC = () => {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="block w-full pl-11 pr-4 py-3 bg-slate-900/50 border border-slate-700/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all text-sm"
+                  className="block w-full pl-11 pr-4 py-3 bg-blue-50/50 border border-blue-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm"
                   placeholder="name@university.edu"
                 />
               </div>
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
+              <label htmlFor="password" className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
                 Password
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                  <Lock className="h-5 w-5" />
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-blue-400">
+                  <Lock className="h-4.5 w-4.5" />
                 </div>
                 <input
                   id="password"
@@ -97,18 +106,24 @@ export const Login: React.FC = () => {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="block w-full pl-11 pr-4 py-3 bg-slate-900/50 border border-slate-700/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all text-sm"
+                  className="block w-full pl-11 pr-4 py-3 bg-blue-50/50 border border-blue-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm"
                   placeholder="••••••••"
                 />
               </div>
             </div>
-          </div>
 
-          <div>
+            <div className="flex justify-end">
+              <Link to="/forgot-password" className="text-xs font-semibold text-blue-600 hover:text-blue-700">
+                Forgot password?
+              </Link>
+            </div>
+
             <button
               type="submit"
               disabled={loading}
-              className="group relative w-full flex justify-center items-center gap-2 py-3.5 px-4 bg-brand-600 hover:bg-brand-500 text-white text-sm font-bold rounded-xl shadow-lg shadow-brand-500/20 hover:shadow-brand-500/30 transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              id="login-submit-btn"
+              className="group w-full flex justify-center items-center gap-2 py-3.5 px-4 text-white text-sm font-bold rounded-xl shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{ background: loading ? '#93c5fd' : 'linear-gradient(135deg, #2563eb, #1d4ed8)' }}
             >
               {loading ? (
                 <Loader2 className="h-5 w-5 animate-spin" />
@@ -119,16 +134,22 @@ export const Login: React.FC = () => {
                 </>
               )}
             </button>
-          </div>
-        </form>
+          </form>
 
-        <div className="text-center mt-6">
-          <p className="text-sm text-slate-400">
-            Don't have an account?{' '}
-            <Link to="/register" className="font-semibold text-brand-400 hover:text-brand-300 transition-colors">
-              Create student account
-            </Link>
-          </p>
+          <div className="text-center mt-6 pt-6 border-t border-blue-100">
+            <p className="text-sm text-slate-500">
+              Don't have an account?{' '}
+              <Link to="/register" className="font-semibold text-blue-600 hover:text-blue-700 transition-colors">
+                Create student account
+              </Link>
+            </p>
+          </div>
+        </div>
+
+        {/* Footer note */}
+        <div className="flex items-center justify-center gap-2 mt-5 text-xs text-slate-400">
+          <BookOpen className="h-3.5 w-3.5 text-blue-400" />
+          <span>Student Curriculum & Activity Tracking System</span>
         </div>
       </div>
     </div>
