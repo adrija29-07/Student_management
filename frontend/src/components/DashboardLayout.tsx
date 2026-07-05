@@ -186,14 +186,14 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
   );
 
   return (
-    <div className="flex h-screen bg-slate-50 dark:bg-slate-950 overflow-hidden">
+    <div className="flex h-screen bg-[#fff7ef] overflow-hidden">
       {/* Desktop Sidebar */}
-      <aside className="hidden md:flex md:flex-shrink-0 md:w-56 flex-col bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 transition-colors duration-200">
-        <div className="flex items-center gap-2.5 px-4 h-14 border-b border-slate-200 dark:border-slate-800">
-          <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-brand-500 to-indigo-600 flex items-center justify-center">
+      <aside className="hidden md:flex md:flex-shrink-0 md:w-56 flex-col bg-white border-r border-[#fde5c5] transition-colors duration-200 shadow-sm">
+        <div className="flex items-center gap-2.5 px-4 h-14 border-b border-[#fde5c5]">
+          <div className="h-7 w-7 rounded-lg bg-[#ff9c0f] flex items-center justify-center">
             <GraduationCap className="h-4 w-4 text-white" />
           </div>
-          <span className="font-outfit font-bold text-lg tracking-tight text-slate-800 dark:text-white">EduTrack</span>
+          <span className="font-outfit font-bold text-lg tracking-tight text-slate-800">EduTrack</span>
         </div>
         <SidebarContent />
       </aside>
@@ -205,7 +205,7 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
           <div className="relative flex flex-col w-full max-w-xs bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800">
             <div className="flex items-center justify-between px-4 h-14 border-b border-slate-200 dark:border-slate-800">
               <div className="flex items-center gap-2">
-                <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-brand-500 to-indigo-600 flex items-center justify-center">
+                <div className="h-7 w-7 rounded-lg bg-[#ff9c0f] flex items-center justify-center">
                   <GraduationCap className="h-4 w-4 text-white" />
                 </div>
                 <span className="font-outfit font-bold text-lg text-slate-800 dark:text-white">EduTrack</span>
@@ -221,7 +221,7 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        <header className="h-14 flex items-center justify-between px-4 sm:px-6 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 transition-colors duration-200 flex-shrink-0">
+        <header className="h-14 flex items-center justify-between px-4 sm:px-6 bg-[#fff7ef] border-b border-[#fde5c5] transition-colors duration-200 flex-shrink-0">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setIsSidebarOpen(true)}

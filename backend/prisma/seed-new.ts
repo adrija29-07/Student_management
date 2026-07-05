@@ -108,7 +108,7 @@ async function main() {
     const categoryId = categoryMap.get(categoryName)!;
     for (const type of types) {
       const result = await prisma.activityType.upsert({
-        where: { name: type.name },
+        where: { name_categoryId: { name: type.name, categoryId } },
         update: {},
         create: { name: type.name, categoryId, icon: type.icon },
       });
@@ -124,53 +124,65 @@ async function main() {
 
   const admin = await prisma.user.upsert({
     where: { email: 'admin@tracker.com' },
-    update: { role: 'ADMIN', name: 'Dr. Gupta (Coordinator)', password: passwordHash },
+    update: { role: 'ADMIN', name: 'Dr. Gupta (Coordinator)', password: passwordHash, isActive: true },
     create: {
       email: 'admin@tracker.com',
       password: passwordHash,
       name: 'Dr. Gupta (Coordinator)',
       role: 'ADMIN',
       department: 'CSE',
+      isActive: true,
     },
   });
   console.log('✅ Admin created:', admin.email);
 
-  const mentor1 = await prisma.user.upsert({
-    where: { email: 'sharma@tracker.com' },
-    update: { role: 'MENTOR', name: 'Prof. Sharma', password: passwordHash },
-    create: {
-      email: 'sharma@tracker.com',
-      password: passwordHash,
-      name: 'Prof. Sharma',
-      role: 'MENTOR',
-      department: 'CSE',
-    },
-  });
+  // Create mentors for each department with department-specific passwords
+  const mentorsByDept = new Map<string, any>();
+  const deptNames = ['CSE', 'IT', 'ECE', 'EE', 'ME', 'CIVIL', 'AIDS'];
+  const mentorNames: { [key: string]: string } = {
+    CSE: 'Prof. Sharma',
+    IT: 'Dr. Patel',
+    ECE: 'Prof. Singh',
+    EE: 'Dr. Kumar',
+    ME: 'Prof. Reddy',
+    CIVIL: 'Dr. Nair',
+    AIDS: 'Prof. Gupta',
+  };
 
-  const mentor2 = await prisma.user.upsert({
-    where: { email: 'verma@tracker.com' },
-    update: { role: 'MENTOR', name: 'Dr. Verma', password: passwordHash },
-    create: {
-      email: 'verma@tracker.com',
-      password: passwordHash,
-      name: 'Dr. Verma',
-      role: 'MENTOR',
-      department: 'ECE',
-    },
-  });
-  console.log('✅ Mentors created:', mentor1.email, mentor2.email);
+  for (const dept of deptNames) {
+    const deptLower = dept.toLowerCase();
+    const email = `welcome${deptLower}@tracker.com`;
+    const password = `Welcome${deptLower}@123`;
+    const passwordHashDept = bcrypt.hashSync(password, 10);
+
+    const mentor = await prisma.user.upsert({
+      where: { email },
+      update: { role: 'MENTOR', name: mentorNames[dept], password: passwordHashDept, isActive: true },
+      create: {
+        email,
+        password: passwordHashDept,
+        name: mentorNames[dept],
+        role: 'MENTOR',
+        department: dept,
+        isActive: true,
+      },
+    });
+    mentorsByDept.set(dept, mentor);
+  }
+  console.log('✅ Mentors created for all departments');
 
   const students = [
-    { email: 'arjun@tracker.com', name: 'Arjun Mehta', dept: 'CSE', fields: ['AI', 'Web Development'], mentor: mentor1 },
-    { email: 'priya@tracker.com', name: 'Priya Patel', dept: 'CSE', fields: ['Database', 'System Design'], mentor: mentor1 },
-    { email: 'vikram@tracker.com', name: 'Vikram Singh', dept: 'IT', fields: ['Cloud', 'DevOps'], mentor: mentor1 },
-    { email: 'neha@tracker.com', name: 'Neha Gupta', dept: 'ECE', fields: ['IoT', 'Embedded'], mentor: mentor2 },
+    { email: 'arjun@tracker.com', name: 'Arjun Mehta', dept: 'CSE', fields: ['AI', 'Web Development'] },
+    { email: 'priya@tracker.com', name: 'Priya Patel', dept: 'CSE', fields: ['Database', 'System Design'] },
+    { email: 'vikram@tracker.com', name: 'Vikram Singh', dept: 'IT', fields: ['Cloud', 'DevOps'] },
+    { email: 'neha@tracker.com', name: 'Neha Gupta', dept: 'ECE', fields: ['IoT', 'Embedded'] },
   ];
 
   for (const stud of students) {
+    const studentMentor = mentorsByDept.get(stud.dept);
     await prisma.user.upsert({
       where: { email: stud.email },
-      update: {},
+      update: { isActive: true },
       create: {
         email: stud.email,
         password: passwordHash,
@@ -178,7 +190,8 @@ async function main() {
         role: 'STUDENT',
         department: stud.dept,
         interestedFields: stud.fields,
-        mentorId: stud.mentor.id,
+        mentorId: studentMentor?.id,
+        isActive: true,
       },
     });
   }

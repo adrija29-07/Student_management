@@ -55,6 +55,8 @@ model ActivityType {
   
   category   ActivityCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   activities Activity[]
+
+  @@unique([name, categoryId])
 }
 
 model Activity {

@@ -9,7 +9,7 @@
     "dev": "nodemon src/server.ts",
     "prisma:generate": "npx prisma generate",
     "prisma:migrate": "npx prisma migrate dev",
-    "prisma:seed": "ts-node prisma/seed.ts"
+    "prisma:seed": "ts-node prisma/seed-new.ts"
   },
   "keywords": [],
   "author": "",

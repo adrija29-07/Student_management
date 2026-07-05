@@ -319,48 +319,53 @@ export const StudentDashboard: React.FC = () => {
 
       {/* Welcome Card & Target Bar */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 bg-gradient-to-br from-brand-600 to-indigo-800 text-white rounded-3xl p-6 sm:p-8 flex flex-col justify-between shadow-xl relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl pointer-events-none" />
-          <div className="space-y-4">
-            <span className="bg-white/20 text-white text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-wider backdrop-blur-xs">
-              Student Center
-            </span>
-            <h1 className="text-3xl sm:text-4xl font-outfit font-bold">
-              Hello, {user?.name}!
-            </h1>
-            <p className="text-brand-100 max-w-md text-sm sm:text-base leading-relaxed">
-              Track your activities, submit certificates, and watch your curriculum credit grow. Reach {targetCredits} credits to unlock your certification.
-            </p>
+        <div className="lg:col-span-2 section-hero text-slate-900 relative overflow-hidden">
+          <div className="absolute inset-y-0 right-0 w-full max-w-xl opacity-40 pointer-events-none">
+            <div className="absolute top-10 right-[-70px] h-52 w-52 rounded-full bg-[#ffb830]/20 blur-3xl" />
+            <div className="absolute bottom-8 right-16 h-40 w-40 rounded-full bg-[#f7d8a3]/25 blur-3xl" />
           </div>
-          <div className="mt-8 flex flex-wrap gap-4 items-center">
-            <button
-              onClick={() => setIsUploadOpen(true)}
-              className="bg-white text-brand-600 hover:bg-slate-100 px-5 py-3 rounded-2xl font-semibold shadow-md flex items-center gap-2 transition-all"
-            >
-              <Plus className="h-5 w-5" />
-              Upload Activity
-            </button>
-            {user?.mentor ? (
-              <div className="text-xs text-brand-200">
-                Assigned Mentor: <strong className="text-white">{user.mentor.name}</strong>
-              </div>
-            ) : (
-              <div className="flex items-center gap-1.5 text-xs text-amber-300">
-                <AlertTriangle className="h-4 w-4" />
-                No mentor assigned yet. Contact admin.
-              </div>
-            )}
+          <div className="relative z-10 flex flex-col justify-between h-full gap-6">
+            <div className="space-y-4 max-w-2xl">
+              <span className="badge-accent uppercase tracking-[0.3em] text-[10px] font-semibold">
+                Student Dashboard
+              </span>
+              <h1 className="text-3xl sm:text-4xl font-outfit font-bold leading-tight">
+                Hello, {user?.name}!
+              </h1>
+              <p className="text-sm sm:text-base text-slate-700 max-w-2xl leading-7">
+                Welcome back! Track your activities, upload new credentials, and watch your approved credits grow toward graduation.
+              </p>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+              <button
+                onClick={() => setIsUploadOpen(true)}
+                className="btn-brand shadow-lg shadow-[#ff9c0f]/20"
+              >
+                <Plus className="h-5 w-5" />
+                Upload Activity
+              </button>
+              {user?.mentor ? (
+                <div className="rounded-3xl bg-white/90 border border-brand-100 px-4 py-3 text-sm text-slate-700 shadow-sm">
+                  <div className="text-xs uppercase tracking-[0.2em] text-slate-500">Mentor</div>
+                  <div className="mt-1 font-semibold text-slate-900">{user.mentor.name}</div>
+                </div>
+              ) : (
+                <div className="rounded-3xl bg-[#fff3d2] border border-[#ffe6aa] px-4 py-3 text-sm text-[#6f3812] shadow-sm">
+                  <div className="flex items-center gap-2 font-semibold">No mentor assigned yet</div>
+                  <div className="text-xs text-slate-600 mt-1">Contact admin for assignment.</div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
         {/* Progress Ring */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 flex flex-col items-center justify-center text-center shadow-sm">
-          <h3 className="font-outfit font-bold text-slate-800 dark:text-slate-200 mb-4 text-base">Curriculum Progress</h3>
+        <div className="section-card flex flex-col items-center justify-center text-center">
+          <h3 className="font-outfit font-bold text-slate-900 mb-4 text-base">Curriculum Progress</h3>
           <div className="relative flex items-center justify-center">
-            {/* SVG Progress Circle */}
             <svg className="w-36 h-36">
               <circle
-                className="text-slate-100 dark:text-slate-800"
+                className="text-[#fff5e1]"
                 strokeWidth="10"
                 stroke="currentColor"
                 fill="transparent"
@@ -369,7 +374,7 @@ export const StudentDashboard: React.FC = () => {
                 cy="72"
               />
               <circle
-                className="text-brand-600 dark:text-brand-400 transition-all duration-500"
+                className="text-brand-500 transition-all duration-500"
                 strokeWidth="10"
                 strokeDasharray={364}
                 strokeDashoffset={364 - (364 * progressPercent) / 100}
@@ -383,20 +388,19 @@ export const StudentDashboard: React.FC = () => {
               />
             </svg>
             <div className="absolute flex flex-col items-center">
-              <span className="text-3xl font-outfit font-extrabold text-slate-800 dark:text-white">
+              <span className="text-3xl font-outfit font-extrabold text-slate-900">
                 {progressPercent}%
               </span>
-              <span className="text-xs text-slate-500 dark:text-slate-400">
+              <span className="text-xs text-slate-500">
                 {approvedCredits} / {targetCredits} credits
               </span>
             </div>
           </div>
-          
           {progressPercent >= 100 ? (
             <div className="mt-5 w-full">
               <button
                 onClick={generateCertificate}
-                className="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-2.5 rounded-2xl font-bold shadow-md shadow-emerald-500/10 flex items-center justify-center gap-2 transition-all text-sm"
+                className="w-full btn-brand text-sm flex items-center justify-center gap-2"
               >
                 <Award className="h-5 w-5" />
                 Claim Certificate
@@ -404,8 +408,8 @@ export const StudentDashboard: React.FC = () => {
               <canvas ref={canvasRef} className="hidden" />
             </div>
           ) : (
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-4 leading-relaxed">
-              Earn {targetCredits - approvedCredits} more credits to qualify for graduation certification.
+            <p className="text-sm text-slate-600 mt-4 leading-relaxed">
+              Earn <span className="font-semibold text-slate-900">{targetCredits - approvedCredits}</span> more credits to qualify for graduation certification.
             </p>
           )}
         </div>
@@ -413,37 +417,38 @@ export const StudentDashboard: React.FC = () => {
 
       {/* Statistics Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm">
-          <div className="text-slate-400 dark:text-slate-500 mb-1.5"><FileText className="h-5 w-5" /></div>
+        <div className="section-card border border-[#fff0d6] p-5">
+          <div className="text-[#ff9c0f] mb-1.5"><FileText className="h-5 w-5" /></div>
           <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Submissions</p>
-          <p className="text-2xl font-outfit font-bold text-slate-800 dark:text-white">{totalSubmissions}</p>
+          <p className="text-2xl font-outfit font-bold text-slate-900">{totalSubmissions}</p>
         </div>
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm">
-          <div className="text-amber-500 mb-1.5"><Clock className="h-5 w-5" /></div>
+        <div className="section-card border border-[#fff0d6] p-5">
+          <div className="text-[#f59e0b] mb-1.5"><Clock className="h-5 w-5" /></div>
           <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Pending Review</p>
-          <p className="text-2xl font-outfit font-bold text-slate-800 dark:text-white">{pendingCount}</p>
+          <p className="text-2xl font-outfit font-bold text-slate-900">{pendingCount}</p>
         </div>
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm">
-          <div className="text-emerald-500 mb-1.5"><CheckCircle className="h-5 w-5" /></div>
+        <div className="section-card border border-[#fff0d6] p-5">
+          <div className="text-[#34d399] mb-1.5"><CheckCircle className="h-5 w-5" /></div>
           <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Credits Approved</p>
-          <p className="text-2xl font-outfit font-bold text-slate-800 dark:text-white">{approvedCredits}</p>
+          <p className="text-2xl font-outfit font-bold text-slate-900">{approvedCredits}</p>
         </div>
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm">
-          <div className="text-rose-500 mb-1.5"><XCircle className="h-5 w-5" /></div>
+        <div className="section-card border border-[#fff0d6] p-5">
+          <div className="text-[#fb7185] mb-1.5"><XCircle className="h-5 w-5" /></div>
           <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Rejected</p>
-          <p className="text-2xl font-outfit font-bold text-slate-800 dark:text-white">{rejectedCount}</p>
+          <p className="text-2xl font-outfit font-bold text-slate-900">{rejectedCount}</p>
         </div>
       </div>
 
       {/* Main Grid: List of Submissions & Details Drawer */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Table List */}
-        <div className="lg:col-span-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-outfit font-bold text-slate-800 dark:text-white">Activity Timeline</h2>
-            <span className="text-xs bg-slate-100 dark:bg-slate-800 text-slate-500 px-3 py-1.5 rounded-full font-medium">
-              Sorted by date
-            </span>
+        <div className="lg:col-span-2 section-card">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+            <div>
+              <h2 className="text-xl font-outfit font-bold text-slate-900">Activity Timeline</h2>
+              <p className="text-sm text-slate-500 mt-1">Review your recent submissions and next steps.</p>
+            </div>
+            <span className="badge-accent">Sorted by date</span>
           </div>
 
           {loading ? (
