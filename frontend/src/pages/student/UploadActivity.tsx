@@ -1,33 +1,39 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { activityAPI } from '../../services/api';
+import { activityAPI, mentorAPI } from '../../services/api';
 import {
   UploadCloud, X, FileText, Tag, Plus, ArrowLeft, Send, Save,
   Calendar, Loader2, CheckCircle, AlertCircle
 } from 'lucide-react';
 
-const ACTIVITY_TYPES = ['Workshop', 'Internship', 'Project', 'Volunteer Work', 'Sports', 'Certifications', 'Other'];
-const DEPARTMENTS = ['INFORMATION TECHNOLOGY', 'ARTIFICIAL INTELLIGENCE AND DATA SCIENCE', 'COMPUTER SCIENCE AND ENGINEERING', 'ELECTRONICS AND COMMUNICATION ENGINEERING', 'ELECTICAL ENGINEERING'];
+interface ActivityCategory {
+  id: string;
+  name: string;
+  icon?: string;
+  color?: string;
+}
+
+interface ActivityType {
+  id: string;
+  name: string;
+  categoryId: string;
+}
+
+interface Department {
+  id: string;
+  name: string;
+  code: string;
+}
 
 export const UploadActivity: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const resubmit = location.state?.resubmit;
 
+  // State
   const [title, setTitle] = useState(resubmit?.title || '');
-  const [type, setType] = useState(resubmit?.type || 'Workshop');
-
-  const DEPARTMENTS = [
-    "INFORMATION TECHNOLOGY",
-    "ARTIFICIAL INTELLIGENCE AND DATA SCIENCE",
-    "COMPUTER SCIENCE AND ENGINEERING",
-    "ELECTRONICS AND COMMUNICATION ENGINEERING",
-    "ELECTRICAL ENGINEERING"
-  ];
-
-  const [department, setDepartment] = useState(
-    resubmit?.department || DEPARTMENTS[0]
-  );
+  const [categoryId, setCategoryId] = useState(resubmit?.categoryId || '');
+  const [typeId, setTypeId] = useState(resubmit?.typeId || '');
   const [description, setDescription] = useState(resubmit?.description || '');
   const [credits, setCredits] = useState(resubmit?.credits?.toString() || '1');
   const [startDate, setStartDate] = useState('');
@@ -42,7 +48,52 @@ export const UploadActivity: React.FC = () => {
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
 
+  // Dynamic data
+  const [categories, setCategories] = useState<ActivityCategory[]>([]);
+  const [types, setTypes] = useState<ActivityType[]>([]);
+  const [filteredTypes, setFilteredTypes] = useState<ActivityType[]>([]);
+  const [departments, setDepartments] = useState<Department[]>([]);
+  const [loadingData, setLoadingData] = useState(true);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Fetch dynamic data
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [catRes, typeRes, deptRes] = await Promise.all([
+          mentorAPI.getCategories(),
+          mentorAPI.getActivityTypes(),
+          mentorAPI.getDepartments(),
+        ]);
+        setCategories(catRes.data);
+        setTypes(typeRes.data);
+        setDepartments(deptRes.data);
+        
+        // Set default category if not resubmitting
+        if (!resubmit && catRes.data.length > 0) {
+          setCategoryId(catRes.data[0].id);
+        }
+      } catch (err) {
+        console.error('Failed to fetch form data:', err);
+        setError('Failed to load form data. Please refresh.');
+      } finally {
+        setLoadingData(false);
+      }
+    };
+    fetchData();
+  }, [resubmit]);
+
+  // Filter types when category changes
+  useEffect(() => {
+    if (categoryId) {
+      const filtered = types.filter(t => t.categoryId === categoryId);
+      setFilteredTypes(filtered);
+      if (filtered.length > 0 && !typeId) {
+        setTypeId(filtered[0].id);
+      }
+    }
+  }, [categoryId, types, typeId]);
 
   const onDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -61,13 +112,17 @@ export const UploadActivity: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title || !description) { setError('Title and description are required.'); return; }
+    if (!title || !description || !categoryId || !typeId) {
+      setError('Title, description, category and type are required.');
+      return;
+    }
     setError('');
     setLoading(true);
     const formData = new FormData();
     formData.append('title', title);
     formData.append('description', description);
-    formData.append('type', type);
+    formData.append('categoryId', categoryId);
+    formData.append('typeId', typeId);
     formData.append('credits', credits);
     formData.append('githubLink', githubLink);
     formData.append('linkedinLink', linkedinLink);
@@ -98,6 +153,12 @@ export const UploadActivity: React.FC = () => {
       <p className="text-slate-500 dark:text-slate-400">
         Your activity has been submitted and is awaiting mentor review. Redirecting…
       </p>
+    </div>
+  );
+
+  if (loadingData) return (
+    <div className="flex items-center justify-center py-24">
+      <div className="animate-spin rounded-full h-8 w-8 border-4 border-brand-600 border-t-transparent"></div>
     </div>
   );
 
@@ -132,7 +193,7 @@ export const UploadActivity: React.FC = () => {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Activity Title */}
+        {/* Activity Information */}
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 space-y-5">
           <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 border-b border-slate-100 dark:border-slate-800 pb-3">
             Activity Information
@@ -155,26 +216,34 @@ export const UploadActivity: React.FC = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
-                Activity Type <span className="text-rose-500">*</span>
+                Category <span className="text-rose-500">*</span>
               </label>
               <select
-                value={type}
-                onChange={e => setType(e.target.value)}
+                value={categoryId}
+                onChange={e => setCategoryId(e.target.value)}
+                required
                 className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
               >
-                {ACTIVITY_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                <option value="">Select a category...</option>
+                {categories.map(c => (
+                  <option key={c.id} value={c.id}>{c.icon} {c.name}</option>
+                ))}
               </select>
             </div>
             <div>
               <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
-                Department
+                Activity Type <span className="text-rose-500">*</span>
               </label>
               <select
-                value={department}
-                onChange={e => setDepartment(e.target.value)}
+                value={typeId}
+                onChange={e => setTypeId(e.target.value)}
+                required
                 className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
               >
-                {DEPARTMENTS.map(d => <option key={d} value={d}>{d}</option>)}
+                <option value="">Select a type...</option>
+                {filteredTypes.map(t => (
+                  <option key={t.id} value={t.id}>{t.name}</option>
+                ))}
               </select>
             </div>
           </div>

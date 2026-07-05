@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 import authRoutes from './routes/auth';
 import activityRoutes from './routes/activities';
 import adminRoutes from './routes/admin';
+import mentorRoutes from './routes/mentor';
 import path from 'path';
 
 dotenv.config();
@@ -33,6 +34,7 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 app.use('/api/auth', authRoutes);
 app.use('/api/activities', activityRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/mentor', mentorRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {

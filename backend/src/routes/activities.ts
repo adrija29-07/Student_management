@@ -4,6 +4,7 @@ import { PrismaClient } from '@prisma/client';
 import { authMiddleware, requireRole, AuthRequest } from '../auth';
 import { sendNotificationEmail } from '../utils/mailer';
 import { imagekit } from '../utils/imagekit';
+import fs from 'fs';
 import path from 'path';
 
 const router = express.Router();
@@ -44,17 +45,29 @@ const uploadToImageKit = async (buffer: Buffer, originalName: string): Promise<s
     return url;
   } catch (err: any) {
     console.error('[IMAGEKIT] Upload failed:', err?.message || err);
-    throw err;
+    // Fallback: save file to local uploads folder so preview still works in dev
+    try {
+      const uploadsDir = path.join(__dirname, '../uploads');
+      if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+      const localPath = path.join(uploadsDir, fileName);
+      fs.writeFileSync(localPath, Buffer.from(base64, 'base64'));
+      const localUrl = `/uploads/${fileName}`;
+      console.log(`[IMAGEKIT] Fallback saved to ${localUrl}`);
+      return localUrl;
+    } catch (fsErr) {
+      console.error('[IMAGEKIT] Fallback save failed:', fsErr);
+      throw err;
+    }
   }
 };
 
 // Student upload activity
 router.post('/upload', requireRole(['STUDENT', 'ADMIN']), upload.single('file'), async (req: AuthRequest, res) => {
   try {
-    const { title, description, type, credits, githubLink, linkedinLink } = req.body;
+    const { title, description, typeId, categoryId, credits, githubLink, linkedinLink } = req.body;
     const userId = req.userId!;
 
-    if (!title || !description || !type) {
+    if (!title || !description) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
@@ -68,7 +81,7 @@ router.post('/upload', requireRole(['STUDENT', 'ADMIN']), upload.single('file'),
       return res.status(404).json({ error: 'Student profile not found' });
     }
 
-    // Upload file to ImageKit if provided
+    // Upload file to ImageKit (or fallback) if provided
     let fileUrl: string | null = null;
     if (req.file) {
       fileUrl = await uploadToImageKit(req.file.buffer, req.file.originalname);
@@ -79,9 +92,11 @@ router.post('/upload', requireRole(['STUDENT', 'ADMIN']), upload.single('file'),
         studentId: userId,
         title,
         description,
-        type,
+        typeId: typeId || null,
+        categoryId: categoryId || null,
         status: 'SUBMITTED',
         filePath: fileUrl,
+        department: (student.department as string) || null,
         credits: credits ? parseInt(credits) : 1,
         githubLink: githubLink || null,
         linkedinLink: linkedinLink || null,
@@ -90,10 +105,15 @@ router.post('/upload', requireRole(['STUDENT', 'ADMIN']), upload.single('file'),
 
     // Notify Mentor
     if (student.mentor) {
+      let typeLabel = 'Activity';
+      if (typeId) {
+        const t = await prisma.activityType.findUnique({ where: { id: typeId } });
+        typeLabel = t?.name || 'Activity';
+      }
       await sendNotificationEmail(
         student.mentor.email,
         `New Activity Review Request from ${student.name}`,
-        `Hello ${student.mentor.name},\n\nStudent ${student.name} has submitted a new activity for review:\nTitle: "${title}"\nType: ${type}\n\nPlease log in to review and approve/reject this activity.`
+        `Hello ${student.mentor.name},\n\nStudent ${student.name} has submitted a new activity for review:\nTitle: "${title}"\nType: ${typeLabel}\n\nPlease log in to review and approve/reject this activity.`
       );
     }
 
@@ -298,13 +318,13 @@ router.post('/:id/reject', requireRole(['MENTOR', 'ADMIN']), async (req: AuthReq
 router.put('/:id/resubmit', requireRole(['STUDENT', 'ADMIN']), upload.single('file'), async (req: AuthRequest, res) => {
   try {
     const { id } = req.params;
-    const { title, description, type, credits, githubLink, linkedinLink } = req.body;
+    const { title, description, typeId, categoryId, credits, githubLink, linkedinLink } = req.body;
     const userId = req.userId!;
     const activityId = id;
 
     const activity = await prisma.activity.findUnique({
       where: { id: activityId },
-      include: { student: { include: { mentor: true } } },
+      include: { student: { include: { mentor: true } }, type: true },
     });
 
     if (!activity) {
@@ -326,7 +346,8 @@ router.put('/:id/resubmit', requireRole(['STUDENT', 'ADMIN']), upload.single('fi
       data: {
         title: title || activity.title,
         description: description || activity.description,
-        type: type || activity.type,
+        typeId: typeId || activity.typeId,
+        categoryId: categoryId || activity.categoryId,
         status: 'SUBMITTED',
         filePath: newFileUrl,
         credits: credits ? parseInt(credits) : activity.credits,
@@ -334,6 +355,7 @@ router.put('/:id/resubmit', requireRole(['STUDENT', 'ADMIN']), upload.single('fi
         linkedinLink: linkedinLink !== undefined ? (linkedinLink || null) : activity.linkedinLink,
         uploadDate: new Date(), // Reset upload date to now
       },
+      include: { type: true },
     });
 
     // Notify Mentor
@@ -341,7 +363,7 @@ router.put('/:id/resubmit', requireRole(['STUDENT', 'ADMIN']), upload.single('fi
       await sendNotificationEmail(
         activity.student.mentor.email,
         `Activity Resubmission: ${activity.student.name}`,
-        `Hello ${activity.student.mentor.name},\n\nStudent ${activity.student.name} has resubmitted the activity:\nTitle: "${updated.title}"\nType: ${updated.type}\n\nPlease log in to review the revised activity.`
+        `Hello ${activity.student.mentor.name},\n\nStudent ${activity.student.name} has resubmitted the activity:\nTitle: "${updated.title}"\nType: ${updated.type?.name || 'Activity'}\n\nPlease log in to review the revised activity.`
       );
     }
 

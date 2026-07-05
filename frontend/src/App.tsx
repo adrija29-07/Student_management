@@ -12,8 +12,17 @@ import { MentorHome } from './pages/mentor/MentorHome';
 import { ReviewQueue } from './pages/mentor/ReviewQueue';
 import { ReviewActivity } from './pages/mentor/ReviewActivity';
 import { MyStudents } from './pages/mentor/MyStudents';
+import { StudentProfile } from './pages/mentor/StudentProfile';
 import { MentorReports } from './pages/mentor/MentorReports';
 import { MentorSettings } from './pages/mentor/MentorSettings';
+import { DepartmentInsights } from './pages/mentor/DepartmentInsights';
+import { ClubsAndTeams } from './pages/mentor/ClubsAndTeams';
+import { ActivityVerification } from './pages/mentor/ActivityVerification';
+import { HackathonTeamBuilder } from './pages/mentor/HackathonTeamBuilder';
+import { ClubManagement } from './pages/mentor/ClubManagement';
+import { ApprovedActivities } from './pages/mentor/ApprovedActivities';
+import { RejectedActivities } from './pages/mentor/RejectedActivities';
+import { MentorNotifications } from './pages/mentor/MentorNotifications';
 
 import { MyActivities } from './pages/student/MyActivities';
 import { UploadActivity } from './pages/student/UploadActivity';
@@ -129,6 +138,13 @@ export default function App() {
                       <Route path="review-queue" element={<ReviewQueue />} />
                       <Route path="review/:id" element={<ReviewActivity />} />
                       <Route path="my-students" element={<MyStudents />} />
+                      <Route path="students/:id" element={<StudentProfile />} />
+                      {/* Removed: verification, clubs-teams, insights, events per request */}
+                      <Route path="approved" element={<ApprovedActivities />} />
+                      <Route path="rejected" element={<RejectedActivities />} />
+                      <Route path="hackathon" element={<HackathonTeamBuilder />} />
+                      <Route path="clubs" element={<ClubManagement />} />
+                      <Route path="notifications" element={<MentorNotifications />} />
                       <Route path="reports" element={<MentorReports />} />
                       <Route path="settings" element={<MentorSettings />} />
                     </Routes>

@@ -37,7 +37,7 @@ export const authAPI = {
 
 export const activityAPI = {
   uploadActivity: (formData: FormData) =>
-    api.post('/activities/upload', formData),
+    api.post('/activities/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
 
   getMyActivities: (params?: { status?: string; type?: string }) =>
     api.get('/activities/my-activities', { params }),
@@ -103,6 +103,67 @@ export const adminAPI = {
 
   getAuditLogs: (params?: { search?: string; action?: string }) =>
     api.get('/admin/audit-logs', { params }),
+};
+
+export const mentorAPI = {
+  // Resources (Categories, Types, Departments)
+  getCategories: () => api.get('/mentor/categories'),
+  
+  getActivityTypes: () => api.get('/mentor/activity-types'),
+  
+  getDepartments: () => api.get('/mentor/departments'),
+
+  // Dashboard
+  getDashboardStats: () => api.get('/mentor/dashboard-stats'),
+
+  getStudents: (params?: { search?: string; department?: string }) =>
+    api.get('/mentor/students', { params }),
+
+  getStudentProfile: (id: string) => api.get(`/mentor/students/${id}`),
+
+  getDepartmentInsights: () => api.get('/mentor/department-insights'),
+
+  getReports: () => api.get('/mentor/reports'),
+
+  getApprovedActivities: () => api.get('/mentor/approved-activities'),
+
+  getRejectedActivities: () => api.get('/mentor/rejected-activities'),
+
+  // Teams (Universal)
+  getTeams: (params?: { category?: string; activityType?: string }) =>
+    api.get('/mentor/teams', { params }),
+
+  createTeam: (data: { name: string; description?: string; tags?: string[]; memberIds?: string[]; activityType?: string; category?: string }) =>
+    api.post('/mentor/teams', data),
+
+  deleteTeam: (id: string) => api.delete(`/mentor/teams/${id}`),
+
+  // Hackathon Teams (backward compatibility)
+  getHackathonTeams: () => api.get('/mentor/hackathon-teams'),
+
+  createHackathonTeam: (data: { name: string; description?: string; tags?: string[]; memberIds?: string[] }) =>
+    api.post('/mentor/hackathon-teams', data),
+
+  deleteHackathonTeam: (id: string) => api.delete(`/mentor/hackathon-teams/${id}`),
+
+  // Clubs
+  getClubs: (params?: { category?: string }) => api.get('/mentor/clubs', { params }),
+
+  createClub: (data: { name: string; description?: string; category: string }) =>
+    api.post('/mentor/clubs', data),
+
+  addClubMember: (clubId: string, userId: string, role?: string) =>
+    api.post(`/mentor/clubs/${clubId}/add-member`, { userId, role }),
+
+  removeClubMember: (clubId: string, userId: string) =>
+    api.delete(`/mentor/clubs/${clubId}/remove-member/${userId}`),
+
+  // Notifications (DB-backed)
+  getMentorNotifications: () => api.get('/mentor/notifications'),
+
+  markNotificationRead: (id: string) => api.put(`/mentor/notifications/${id}/read`),
+
+  markAllNotificationsRead: () => api.put('/mentor/notifications/read-all'),
 };
 
 export const profileAPI = {

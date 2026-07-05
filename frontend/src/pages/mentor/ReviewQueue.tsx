@@ -7,14 +7,14 @@ import {
 } from 'lucide-react';
 
 interface Activity {
-  id: number;
+  id: string;
   title: string;
   description: string;
   type: string;
   status: string;
   uploadDate: string;
   filePath: string | null;
-  student: { id: number; name: string; email: string; department: string | null };
+  student: { id: string; name: string; email: string; department: string | null };
 }
 
 const getPriority = (uploadDate: string) => {

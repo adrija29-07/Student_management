@@ -23,6 +23,12 @@ import {
   FileCog,
   History,
   ChevronRight,
+  CheckCircle,
+  XCircle,
+  PieChart,
+  Rocket,
+  Music,
+  Calendar,
 } from 'lucide-react';
 import { notificationAPI } from '../services/api';
 
@@ -80,6 +86,7 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
     { name: 'Review Queue', path: '/mentor/review-queue', icon: <ClipboardList className="h-4 w-4" />, roles: ['MENTOR'] },
     { name: 'My Students', path: '/mentor/my-students', icon: <UserCheck className="h-4 w-4" />, roles: ['MENTOR'] },
     { name: 'Reports', path: '/mentor/reports', icon: <BarChart3 className="h-4 w-4" />, roles: ['MENTOR'] },
+    { name: 'Notifications', path: '/mentor/notifications', icon: <Bell className="h-4 w-4" />, roles: ['MENTOR'] },
     { name: 'Settings', path: '/mentor/settings', icon: <Settings className="h-4 w-4" />, roles: ['MENTOR'] },
     // ADMIN
     { name: 'Dashboard', path: '/admin/dashboard', icon: <LayoutDashboard className="h-4 w-4" />, roles: ['ADMIN'] },
@@ -100,7 +107,10 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
     '/faculty/dashboard': 'Faculty Dashboard',
     '/mentor/dashboard': 'Mentor Dashboard',
     '/mentor/review-queue': 'Review Queue',
+    '/mentor/review': 'Review Activity',
     '/mentor/my-students': 'My Students',
+    // Removed: Activity Verification, Club & Teams, Department Insights, Events
+    '/mentor/notifications': 'Notifications',
     '/mentor/reports': 'Reports',
     '/mentor/settings': 'Settings',
     '/admin/dashboard': 'Admin Dashboard',

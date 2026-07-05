@@ -132,17 +132,50 @@ export const ReviewActivity: React.FC = () => {
           </div>
         )}
 
-        {activity.filePath && (
-          <a
-            href={`http://localhost:5000/uploads/${activity.filePath}`}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center mt-3 text-brand-600 hover:underline"
-          >
-            <FileText className="h-4 w-4 mr-1" />
-            View Attached File
-          </a>
-        )}
+        {activity.filePath && (() => {
+          const fileUrl = activity.filePath.startsWith('http')
+            ? activity.filePath
+            : `http://localhost:5000/uploads/${activity.filePath}`;
+          const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(fileUrl) || fileUrl.includes('imagekit.io');
+          const fileName = activity.filePath.startsWith('http')
+            ? decodeURIComponent(activity.filePath.split('/').pop()?.replace(/^\d+-/, '') || 'Uploaded File')
+            : activity.filePath.replace(/^\d+-/, '');
+
+          return (
+            <div className="mt-4">
+              <p className="text-sm font-semibold text-slate-600 dark:text-slate-400 mb-2">Submitted Certificate / Document</p>
+              {isImage ? (
+                <div>
+                  <a href={fileUrl} target="_blank" rel="noreferrer">
+                    <img
+                      src={fileUrl}
+                      alt="Uploaded certificate"
+                      className="w-full max-h-80 object-contain rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 cursor-pointer hover:opacity-90 transition-opacity"
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                    />
+                  </a>
+                  <p className="text-xs text-slate-400 mt-1">Click to open full size</p>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-3">
+                  <div className="text-sm text-slate-500 dark:text-slate-400">
+                    Preview is not available for this file type.
+                  </div>
+                  <a
+                    href={fileUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-2 px-4 py-2.5 bg-brand-50 dark:bg-brand-900/20 border border-brand-200 dark:border-brand-800 text-brand-600 dark:text-brand-400 rounded-xl hover:bg-brand-100 dark:hover:bg-brand-900/40 transition-colors text-sm font-semibold"
+                  >
+                    <FileText className="h-4 w-4" />
+                    View Attached File
+                  </a>
+                </div>
+              )}
+              <div className="mt-3 text-xs text-slate-400">{fileName}</div>
+            </div>
+          );
+        })()}
       </section>
 
       <form onSubmit={handleSubmit} className="space-y-4">

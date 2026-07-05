@@ -12,7 +12,7 @@ model User {
   email            String   @unique
   password         String
   name             String
-  role             String   // STUDENT, MENTOR, ADMIN
+  role             String   // STUDENT, MENTOR, ADMIN, FACULTY
   department       String?  // CSE, ECE, MECH, etc.
   interestedFields String[] // Fields of interest
   createdAt        DateTime @default(now())
@@ -22,11 +22,39 @@ model User {
   approvals         ActivityApproval[]
   reports           Report[]
   auditLogs         AuditLog[]
+  notifications     Notification[]
   
   // Mentor-Student assignment
   mentorId          String?            @db.ObjectId
   mentor            User?    @relation("MentorStudents", fields: [mentorId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   students          User[]   @relation("MentorStudents")
+
+  // Teams
+  ledTeams          Team[]  @relation("TeamLeader")
+  teamMemberships   TeamMember[]
+
+  // Club membership
+  clubMemberships   ClubMember[]
+}
+
+
+model ActivityCategory {
+  id       String   @id @default(auto()) @map("_id") @db.ObjectId
+  name     String   @unique // Technical, Co-Curricular, Sports, Social
+  icon     String?
+  color    String?
+  activities Activity[]
+  types    ActivityType[]
+}
+
+model ActivityType {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  name       String
+  categoryId String   @db.ObjectId
+  icon       String?
+  
+  category   ActivityCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  activities Activity[]
 }
 
 model Activity {
@@ -34,15 +62,19 @@ model Activity {
   studentId    String   @db.ObjectId
   title        String
   description  String
-  type         String   // Workshop, Project, Volunteer, Internship, etc.
+  categoryId   String?  @db.ObjectId
+  typeId       String?  @db.ObjectId
   uploadDate   DateTime @default(now())
   status       String   // SUBMITTED, UNDER_REVIEW, APPROVED, REJECTED
   filePath     String?
   credits      Int      @default(1)
   githubLink   String?
   linkedinLink String?
+  department   String?  // student's department at time of upload
   
   student     User     @relation("StudentActivities", fields: [studentId], references: [id], onDelete: Cascade)
+  category    ActivityCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  type        ActivityType?      @relation(fields: [typeId], references: [id], onDelete: SetNull)
   approvals   ActivityApproval[]
 }
 
@@ -50,12 +82,80 @@ model ActivityApproval {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
   activityId  String   @db.ObjectId
   mentorId    String   @db.ObjectId
-  decision    String   // APPROVED, REJECTED
+  decision    String   // APPROVED, REJECTED, REVISION
   feedback    String?
   reviewDate  DateTime @default(now())
   
   activity    Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
   mentor      User     @relation(fields: [mentorId], references: [id], onDelete: Cascade)
+}
+
+model Team {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  description String?
+  leaderId    String   @db.ObjectId
+  activityType String?  // Hackathon, Dance, Football, etc.
+  category    String?  // Technical, Co-Curricular, Sports, Social
+  status      String   @default("FORMING") // FORMING, ACTIVE, SUBMITTED, COMPLETED
+  tags        String[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  leader      User     @relation("TeamLeader", fields: [leaderId], references: [id], onDelete: Cascade)
+  members     TeamMember[]
+}
+
+model TeamMember {
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  teamId  String @db.ObjectId
+  userId  String @db.ObjectId
+  role    String @default("MEMBER") // MEMBER, LEADER
+
+  team    Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user    User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Department {
+  id       String   @id @default(auto()) @map("_id") @db.ObjectId
+  name     String   @unique // CSE, IT, ECE, EE, ME, Civil, AI & DS
+  code     String?  @unique
+  createdAt DateTime @default(now())
+}
+
+model Club {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String   @unique
+  description String?
+  category    String   // Technical, Co-Curricular, Sports, Social
+  icon        String?
+  createdAt   DateTime @default(now())
+
+  members     ClubMember[]
+}
+
+model ClubMember {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  clubId    String   @db.ObjectId
+  userId    String   @db.ObjectId
+  joinedAt  DateTime @default(now())
+  role      String   @default("MEMBER") // MEMBER, COORDINATOR
+
+  club      Club @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Notification {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  title     String
+  message   String
+  type      String   @default("INFO") // INFO, SUCCESS, WARNING, ERROR
+  link      String?
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Report {

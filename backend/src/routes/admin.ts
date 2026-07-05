@@ -235,7 +235,7 @@ router.get('/dashboard-stats', async (req: AuthRequest, res) => {
 
     // Dept-wise stats
     const deptStatsRaw = await prisma.activity.groupBy({
-      by: ['type'],
+      by: ['typeId'],
       _count: { _all: true },
     });
 
@@ -356,6 +356,7 @@ router.get('/reports', async (req: AuthRequest, res) => {
         approvals: {
           include: { mentor: { select: { name: true } } },
         },
+        type: true,
       },
     });
 
@@ -377,7 +378,7 @@ router.get('/reports', async (req: AuthRequest, res) => {
       details: activities.map((a) => ({
         id: a.id,
         title: a.title,
-        type: a.type,
+        type: a.type?.name || 'Uncategorized',
         student: a.student.name,
         department: a.student.department,
         status: a.status,
@@ -462,7 +463,94 @@ router.post('/config', async (req: AuthRequest, res) => {
   }
 });
 
-// 5. AUDIT LOGS
+// 5. ACTIVITY CATEGORIES & TYPES
+
+// Get all categories
+router.get('/categories', async (req: AuthRequest, res) => {
+  try {
+    const categories = await prisma.activityCategory.findMany({
+      include: { types: true },
+      orderBy: { name: 'asc' },
+    });
+    res.json(categories);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Create category
+router.post('/categories', async (req: AuthRequest, res) => {
+  try {
+    const { name, icon, color } = req.body;
+    if (!name) return res.status(400).json({ error: 'Category name required' });
+
+    const category = await prisma.activityCategory.create({
+      data: { name, icon, color },
+    });
+    res.json(category);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Get all activity types
+router.get('/activity-types', async (req: AuthRequest, res) => {
+  try {
+    const types = await prisma.activityType.findMany({
+      include: { category: true },
+      orderBy: { name: 'asc' },
+    });
+    res.json(types);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Create activity type
+router.post('/activity-types', async (req: AuthRequest, res) => {
+  try {
+    const { name, categoryId, icon } = req.body;
+    if (!name || !categoryId) return res.status(400).json({ error: 'Name and categoryId required' });
+
+    const type = await prisma.activityType.create({
+      data: { name, categoryId, icon },
+    });
+    res.json(type);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 6. DEPARTMENTS
+
+// Get all departments
+router.get('/departments', async (req: AuthRequest, res) => {
+  try {
+    const departments = await prisma.department.findMany({
+      orderBy: { name: 'asc' },
+    });
+    res.json(departments);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Create department
+router.post('/departments', async (req: AuthRequest, res) => {
+  try {
+    const { name, code } = req.body;
+    if (!name) return res.status(400).json({ error: 'Department name required' });
+
+    const dept = await prisma.department.create({
+      data: { name, code: code || name.toUpperCase() },
+    });
+    res.json(dept);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 7. AUDIT LOGS
 router.get('/audit-logs', async (req: AuthRequest, res) => {
   try {
     const logs = await prisma.auditLog.findMany({
