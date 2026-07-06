@@ -632,4 +632,17 @@ router.put('/notifications/read-all', async (req: AuthRequest, res) => {
   }
 });
 
+router.delete('/notifications/:id', async (req: AuthRequest, res) => {
+  try {
+    const notif = await prisma.notification.findUnique({ where: { id: req.params.id } });
+    if (!notif || notif.userId !== req.userId) {
+      return res.status(403).json({ error: 'Not authorized to delete this notification' });
+    }
+    await prisma.notification.delete({ where: { id: req.params.id } });
+    res.json({ message: 'Notification deleted' });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 export default router;

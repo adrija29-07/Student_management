@@ -164,6 +164,8 @@ export const mentorAPI = {
   markNotificationRead: (id: string) => api.put(`/mentor/notifications/${id}/read`),
 
   markAllNotificationsRead: () => api.put('/mentor/notifications/read-all'),
+  
+  deleteNotification: (id: string) => api.delete(`/mentor/notifications/${id}`),
 };
 
 export const profileAPI = {
