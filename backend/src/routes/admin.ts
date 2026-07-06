@@ -166,6 +166,36 @@ router.put('/users/:id/assign-mentor', async (req: AuthRequest, res) => {
   }
 });
 
+// Bulk auto-assign mentors to students without mentorId
+router.post('/users/auto-assign-mentors', async (req: AuthRequest, res) => {
+  try {
+    const students = await prisma.user.findMany({ where: { role: 'STUDENT', mentorId: null, isActive: true } });
+    const mentors = await prisma.user.findMany({ where: { role: 'MENTOR', isActive: true } });
+
+    const assignments: { studentId: string; mentorId: string }[] = [];
+
+    for (const s of students) {
+      const studentDept = (s.department || '').toLowerCase();
+      let chosen = mentors.find(m => (m.department || '').toLowerCase() === studentDept);
+      if (!chosen && studentDept) {
+        chosen = mentors.find(m => (m.department || '').toLowerCase().startsWith(studentDept.substring(0, 2)));
+      }
+      if (chosen) {
+        await prisma.user.update({ where: { id: s.id }, data: { mentorId: chosen.id } });
+        assignments.push({ studentId: s.id, mentorId: chosen.id });
+      }
+    }
+
+    // Log action
+    await prisma.auditLog.create({ data: { userId: req.userId!, action: 'AUTO_ASSIGN_MENTORS', details: `Assigned ${assignments.length} students to mentors` } });
+
+    res.json({ message: `Assigned ${assignments.length} students`, assignments });
+  } catch (err: any) {
+    console.error('Auto assign mentors failed:', err);
+    res.status(500).json({ error: 'Failed to auto-assign mentors' });
+  }
+});
+
 // Toggle User status (Active/Deactive) or Edit Role/Dept
 router.put('/users/:id', async (req: AuthRequest, res) => {
   try {

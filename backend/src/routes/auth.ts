@@ -34,14 +34,16 @@ router.post('/register', async (req, res) => {
 
     let mentorId: string | null = null;
     if (user.role === 'STUDENT') {
-      const defaultMentor = await prisma.user.findFirst({
-        where: { role: 'MENTOR', department: user.department || undefined, isActive: true },
-      });
+      // Find mentor by exact department or using a relaxed match if codes differ
+      const mentors = await prisma.user.findMany({ where: { role: 'MENTOR', isActive: true } });
+      const studentDept = (user.department || '').toLowerCase();
+      let defaultMentor = mentors.find(m => (m.department || '').toLowerCase() === studentDept);
+      if (!defaultMentor && studentDept) {
+        // relaxed matching: startsWith or contains (handles 'ME' vs 'MECH')
+        defaultMentor = mentors.find(m => (m.department || '').toLowerCase().startsWith(studentDept.substring(0, 2)));
+      }
       if (defaultMentor) {
-        await prisma.user.update({
-          where: { id: user.id },
-          data: { mentorId: defaultMentor.id },
-        });
+        await prisma.user.update({ where: { id: user.id }, data: { mentorId: defaultMentor.id } });
         mentorId = defaultMentor.id;
       }
     }

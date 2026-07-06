@@ -115,6 +115,20 @@ router.post('/upload', requireRole(['STUDENT', 'ADMIN']), upload.single('file'),
         `New Activity Review Request from ${student.name}`,
         `Hello ${student.mentor.name},\n\nStudent ${student.name} has submitted a new activity for review:\nTitle: "${title}"\nType: ${typeLabel}\n\nPlease log in to review and approve/reject this activity.`
       );
+      // Create DB notification for mentor (so it appears in app)
+      try {
+        await prisma.notification.create({
+          data: {
+            userId: student.mentor.id,
+            title: `New activity from ${student.name}`,
+            message: `${student.name} has submitted "${title}" for your review.`,
+            type: 'INFO',
+            link: `/mentor/students/${student.id}`,
+          },
+        });
+      } catch (err) {
+        console.error('Failed to create mentor notification:', err);
+      }
     }
 
     res.status(201).json(activity);
@@ -231,29 +245,51 @@ router.post('/:id/approve', requireRole(['MENTOR', 'ADMIN']), async (req: AuthRe
       return res.status(404).json({ error: 'Activity not found' });
     }
 
-    // Create approval record
-    const approval = await prisma.activityApproval.create({
-      data: {
-        activityId,
-        mentorId,
-        decision: 'APPROVED',
-        feedback: feedback || 'Approved',
-      },
-    });
+    // Use transaction: create approval, update activity, then fetch updated activity with approvals
+    let approval;
+    let updated;
+    try {
+      await prisma.$transaction(async (tx) => {
+        approval = await tx.activityApproval.create({
+          data: {
+            activityId,
+            mentorId,
+            decision: 'APPROVED',
+            feedback: feedback || 'Approved',
+          },
+        });
 
-    // Update activity status to APPROVED (or immediately COMPLETED)
-    const updated = await prisma.activity.update({
-      where: { id: activityId },
-      data: { status: 'APPROVED' }, // Will count as COMPLETED in progress tracking
-    });
+        await tx.activity.update({ where: { id: activityId }, data: { status: 'APPROVED' } });
 
-    // Notify Student
-    const mentor = await prisma.user.findUnique({ where: { id: mentorId } });
-    await sendNotificationEmail(
-      activity.student.email,
-      `Your activity "${activity.title}" has been APPROVED`,
-      `Hello ${activity.student.name},\n\nYour submitted activity "${activity.title}" has been APPROVED by Prof. ${mentor?.name || 'Mentor'}.\nFeedback: "${feedback || 'No additional feedback.'}"\n\nLog in to see your updated completion percentage!`
-    );
+        // Create DB notification for student
+        const mentor = await tx.user.findUnique({ where: { id: mentorId } });
+        try {
+          await tx.notification.create({
+            data: {
+              userId: activity.student.id,
+              title: `Your activity was approved`,
+              message: `Your activity \"${activity.title}\" was APPROVED by ${mentor?.name || 'your mentor'}.`,
+              type: 'SUCCESS',
+              link: `/student/activities/${activity.id}`,
+            },
+          });
+        } catch (err) {
+          console.error('Failed to create student notification (approve) in tx:', err);
+        }
+      });
+
+      // Fetch updated activity with approvals
+      updated = await prisma.activity.findUnique({
+        where: { id: activityId },
+        include: {
+          student: { select: { id: true, name: true, email: true } },
+          approvals: { orderBy: { reviewDate: 'desc' }, include: { mentor: { select: { name: true, email: true } } } },
+        },
+      });
+    } catch (err) {
+      console.error('Approve transaction failed:', err);
+      return res.status(500).json({ error: 'Failed to approve activity' });
+    }
 
     res.json({ message: 'Activity approved successfully', activity: updated, approval });
   } catch (error) {
@@ -306,6 +342,20 @@ router.post('/:id/reject', requireRole(['MENTOR', 'ADMIN']), async (req: AuthReq
       `Your activity "${activity.title}" has been REJECTED`,
       `Hello ${activity.student.name},\n\nYour submitted activity "${activity.title}" was REJECTED by Prof. ${mentor?.name || 'Mentor'}.\nFeedback: "${feedback}"\n\nPlease address the feedback and resubmit the activity from your student dashboard.`
     );
+    // Create DB notification for student (rejected)
+    try {
+      await prisma.notification.create({
+        data: {
+          userId: activity.student.id,
+          title: `Your activity was rejected`,
+          message: `Your activity \"${activity.title}\" was REJECTED by ${mentor?.name || 'your mentor'}. Feedback: ${feedback}`,
+          type: 'INFO',
+          link: `/student/activities/${activity.id}`,
+        },
+      });
+    } catch (err) {
+      console.error('Failed to create student notification (reject):', err);
+    }
 
     res.json({ message: 'Activity rejected successfully', activity: updated, approval });
   } catch (error) {
@@ -365,6 +415,20 @@ router.put('/:id/resubmit', requireRole(['STUDENT', 'ADMIN']), upload.single('fi
         `Activity Resubmission: ${activity.student.name}`,
         `Hello ${activity.student.mentor.name},\n\nStudent ${activity.student.name} has resubmitted the activity:\nTitle: "${updated.title}"\nType: ${updated.type?.name || 'Activity'}\n\nPlease log in to review the revised activity.`
       );
+      // Create DB notification for mentor (resubmission)
+      try {
+        await prisma.notification.create({
+          data: {
+            userId: activity.student.mentor.id,
+            title: `Activity Resubmitted: ${activity.student.name}`,
+            message: `${activity.student.name} has resubmitted the activity \"${updated.title}\" for review.`,
+            type: 'INFO',
+            link: `/mentor/students/${activity.student.id}`,
+          },
+        });
+      } catch (err) {
+        console.error('Failed to create mentor notification (resubmit):', err);
+      }
     }
 
     res.json({ message: 'Activity resubmitted successfully', activity: updated });
@@ -412,6 +476,20 @@ router.post('/bulk-approve', requireRole(['MENTOR', 'ADMIN']), async (req: AuthR
           `Your activity "${act.title}" has been APPROVED`,
           `Hello ${act.student.name},\n\nYour activity "${act.title}" has been APPROVED in bulk by your mentor.\n\nLog in to view details.`
         );
+        // Create DB notification for student (bulk approve)
+        try {
+          await tx.notification.create({
+            data: {
+              userId: act.student.id,
+              title: `Activity approved`,
+              message: `Your activity \"${act.title}\" was approved by your mentor.`,
+              type: 'SUCCESS',
+              link: `/student/activities/${act.id}`,
+            },
+          });
+        } catch (err) {
+          console.error('Failed to create notification in bulk approve transaction:', err);
+        }
       }
     });
 

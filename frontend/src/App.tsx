@@ -31,6 +31,7 @@ import { MyReports } from './pages/student/MyReports';
 import { Notifications } from './pages/student/Notifications';
 import { Settings } from './pages/student/Settings';
 import { ActivityDetail } from './pages/student/ActivityDetail';
+import { StudentClubs } from './pages/student/Clubs';
 
 // Wrapper for general authentication checks
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -118,6 +119,7 @@ export default function App() {
                       <Route path="progress" element={<ProgressTracking />} />
                       <Route path="reports" element={<MyReports />} />
                       <Route path="notifications" element={<Notifications />} />
+                      <Route path="clubs" element={<StudentClubs />} />
                       <Route path="settings" element={<Settings />} />
                     </Routes>
                   </DashboardLayout>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { notificationAPI } from '../../services/api';
+import { mentorAPI, notificationAPI } from '../../services/api';
 import {
   Bell, CheckCircle, XCircle, Clock, Trash2, Eye, BellOff,
   Filter, Search, CheckCheck, Info, AlertTriangle
@@ -24,19 +24,6 @@ const NOTIF_ICONS: Record<string, { icon: React.ReactNode; classes: string }> = 
   warning:   { icon: <AlertTriangle className="h-5 w-5" />, classes: 'text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/30' },
 };
 
-// Seed some sample notifications for demo
-const seedNotifications = () => {
-  const existing = localStorage.getItem('notifications');
-  if (!existing) {
-    const samples = [
-      { id: '1', title: 'Activity Approved! 🎉', message: 'Your "Internship at TCS" activity has been APPROVED by Prof. Sharma.', type: 'approved', read: false, createdAt: new Date(Date.now() - 2 * 3600000).toISOString(), link: '/student/activities' },
-      { id: '2', title: 'Activity Rejected', message: 'Your "Project Work" activity has been REJECTED. Feedback: Need more documentation.', type: 'rejected', read: false, createdAt: new Date(Date.now() - 8 * 3600000).toISOString(), link: '/student/activities' },
-      { id: '3', title: 'Review Started', message: 'Prof. Sharma has started reviewing your "Leadership Workshop" activity.', type: 'review', read: true, createdAt: new Date(Date.now() - 24 * 3600000).toISOString() },
-      { id: '4', title: 'Reminder: Pending Activities', message: 'You have 2 activities pending review. The mentor will review them soon.', type: 'info', read: true, createdAt: new Date(Date.now() - 3 * 24 * 3600000).toISOString() },
-    ];
-    localStorage.setItem('notifications', JSON.stringify(samples));
-  }
-};
 
 export const Notifications: React.FC = () => {
   const navigate = useNavigate();
@@ -44,25 +31,57 @@ export const Notifications: React.FC = () => {
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
   const [search, setSearch] = useState('');
 
-  const loadNotifs = () => {
-    seedNotifications();
-    setNotifications(notificationAPI.getNotifications());
+  const loadNotifs = async () => {
+    try {
+      const res = await mentorAPI.getMentorNotifications();
+      // backend uses type like INFO/SUCCESS -> map to lowercase for icons
+      const data = res.data.map((n: any) => ({
+        id: n.id,
+        title: n.title,
+        message: n.message,
+        type: (n.type || 'INFO').toLowerCase(),
+        read: n.isRead,
+        createdAt: n.createdAt,
+        link: n.link,
+      }));
+      setNotifications(data);
+    } catch (err) {
+      console.error('Failed to load notifications from API, falling back to local', err);
+      // fallback to local mock
+      const stored = localStorage.getItem('notifications');
+      setNotifications(stored ? JSON.parse(stored) : []);
+    }
   };
 
   useEffect(() => { loadNotifs(); }, []);
 
-  const markRead = (id: string) => {
-    notificationAPI.markRead(id);
+  const markRead = async (id: string) => {
+    try {
+      await mentorAPI.markNotificationRead(id);
+    } catch (err) {
+      console.error('Mark read API failed, updating local store', err);
+      notificationAPI.markRead(id);
+    }
     loadNotifs();
   };
 
-  const markAllRead = () => {
-    notificationAPI.markAllRead();
+  const markAllRead = async () => {
+    try {
+      await mentorAPI.markAllNotificationsRead();
+    } catch (err) {
+      console.error('Mark all read API failed, updating local store', err);
+      notificationAPI.markAllRead();
+    }
     loadNotifs();
   };
 
-  const deleteNotif = (id: string) => {
-    notificationAPI.deleteNotification(id);
+  const deleteNotif = async (id: string) => {
+    try {
+      await mentorAPI.deleteNotification(id);
+    } catch (err) {
+      console.error('Delete notification API failed, updating local store', err);
+      notificationAPI.deleteNotification(id);
+    }
     loadNotifs();
   };
 

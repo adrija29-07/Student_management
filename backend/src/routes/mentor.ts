@@ -571,6 +571,56 @@ router.post('/clubs', requireRole(['MENTOR', 'ADMIN']), async (req: AuthRequest,
   }
 });
 
+// Student: join a club (authenticated students)
+router.post('/clubs/:id/join', async (req: AuthRequest, res) => {
+  try {
+    const clubId = req.params.id;
+    const userId = req.userId!;
+
+    // Ensure club exists
+    const club = await prisma.club.findUnique({ where: { id: clubId } });
+    if (!club) return res.status(404).json({ error: 'Club not found' });
+
+    // Prevent duplicate membership
+    const exists = await prisma.clubMember.findFirst({ where: { clubId, userId } });
+    if (exists) return res.status(400).json({ error: 'Already a member' });
+
+    const member = await prisma.clubMember.create({ data: { clubId, userId } });
+
+    // Notify mentor(s) or club leader? For now, notify the student
+    try {
+      await prisma.notification.create({
+        data: {
+          userId,
+          title: `Joined ${club.name}`,
+          message: `You have joined the club ${club.name}.`,
+          type: 'INFO',
+          link: `/student/clubs/${clubId}`,
+        },
+      });
+    } catch (err) {
+      console.error('Failed to create join notification:', err);
+    }
+
+    res.json(member);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Student: leave a club
+router.delete('/clubs/:id/leave', async (req: AuthRequest, res) => {
+  try {
+    const clubId = req.params.id;
+    const userId = req.userId!;
+
+    await prisma.clubMember.deleteMany({ where: { clubId, userId } });
+    res.json({ message: 'Left club' });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 router.post('/clubs/:id/add-member', requireRole(['MENTOR', 'ADMIN']), async (req: AuthRequest, res) => {
   try {
     const { userId, role } = req.body;
@@ -627,6 +677,19 @@ router.put('/notifications/read-all', async (req: AuthRequest, res) => {
       data: { isRead: true },
     });
     res.json({ message: 'All marked as read' });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.delete('/notifications/:id', async (req: AuthRequest, res) => {
+  try {
+    const notif = await prisma.notification.findUnique({ where: { id: req.params.id } });
+    if (!notif || notif.userId !== req.userId) {
+      return res.status(403).json({ error: 'Not authorized to delete this notification' });
+    }
+    await prisma.notification.delete({ where: { id: req.params.id } });
+    res.json({ message: 'Notification deleted' });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
