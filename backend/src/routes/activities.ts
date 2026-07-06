@@ -245,42 +245,50 @@ router.post('/:id/approve', requireRole(['MENTOR', 'ADMIN']), async (req: AuthRe
       return res.status(404).json({ error: 'Activity not found' });
     }
 
-    // Create approval record
-    const approval = await prisma.activityApproval.create({
-      data: {
-        activityId,
-        mentorId,
-        decision: 'APPROVED',
-        feedback: feedback || 'Approved',
-      },
-    });
-
-    // Update activity status to APPROVED (or immediately COMPLETED)
-    const updated = await prisma.activity.update({
-      where: { id: activityId },
-      data: { status: 'APPROVED' }, // Will count as COMPLETED in progress tracking
-    });
-
-    // Notify Student
-    const mentor = await prisma.user.findUnique({ where: { id: mentorId } });
-    await sendNotificationEmail(
-      activity.student.email,
-      `Your activity "${activity.title}" has been APPROVED`,
-      `Hello ${activity.student.name},\n\nYour submitted activity "${activity.title}" has been APPROVED by Prof. ${mentor?.name || 'Mentor'}.\nFeedback: "${feedback || 'No additional feedback.'}"\n\nLog in to see your updated completion percentage!`
-    );
-    // Create DB notification for student
+    // Use transaction: create approval, update activity, then fetch updated activity with approvals
+    let approval;
+    let updated;
     try {
-      await prisma.notification.create({
-        data: {
-          userId: activity.student.id,
-          title: `Your activity was approved`,
-          message: `Your activity \"${activity.title}\" was APPROVED by ${mentor?.name || 'your mentor'}.`,
-          type: 'SUCCESS',
-          link: `/student/activities/${activity.id}`,
+      await prisma.$transaction(async (tx) => {
+        approval = await tx.activityApproval.create({
+          data: {
+            activityId,
+            mentorId,
+            decision: 'APPROVED',
+            feedback: feedback || 'Approved',
+          },
+        });
+
+        await tx.activity.update({ where: { id: activityId }, data: { status: 'APPROVED' } });
+
+        // Create DB notification for student
+        const mentor = await tx.user.findUnique({ where: { id: mentorId } });
+        try {
+          await tx.notification.create({
+            data: {
+              userId: activity.student.id,
+              title: `Your activity was approved`,
+              message: `Your activity \"${activity.title}\" was APPROVED by ${mentor?.name || 'your mentor'}.`,
+              type: 'SUCCESS',
+              link: `/student/activities/${activity.id}`,
+            },
+          });
+        } catch (err) {
+          console.error('Failed to create student notification (approve) in tx:', err);
+        }
+      });
+
+      // Fetch updated activity with approvals
+      updated = await prisma.activity.findUnique({
+        where: { id: activityId },
+        include: {
+          student: { select: { id: true, name: true, email: true } },
+          approvals: { orderBy: { reviewDate: 'desc' }, include: { mentor: { select: { name: true, email: true } } } },
         },
       });
     } catch (err) {
-      console.error('Failed to create student notification (approve):', err);
+      console.error('Approve transaction failed:', err);
+      return res.status(500).json({ error: 'Failed to approve activity' });
     }
 
     res.json({ message: 'Activity approved successfully', activity: updated, approval });

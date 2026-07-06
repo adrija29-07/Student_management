@@ -158,6 +158,10 @@ export const mentorAPI = {
   removeClubMember: (clubId: string, userId: string) =>
     api.delete(`/mentor/clubs/${clubId}/remove-member/${userId}`),
 
+  // Student club participation
+  joinClub: (clubId: string) => api.post(`/mentor/clubs/${clubId}/join`),
+  leaveClub: (clubId: string) => api.delete(`/mentor/clubs/${clubId}/leave`),
+
   // Notifications (DB-backed)
   getMentorNotifications: () => api.get('/mentor/notifications'),
 
